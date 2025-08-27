@@ -10,9 +10,341 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ================================
+// USER & AUTHENTICATION
+// ================================
 model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String?
+  role          String   @default("customer") // customer, admin
+  emailVerified DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
+  contactForms  ContactForm[]
+
+  @@map("users")
+}
+
+// ================================
+// CONTENT MANAGEMENT
+// ================================
+model Category {
   id        Int      @id @default(autoincrement())
   name      String
-  email     String   @unique
+  slug      String   @unique
+  description String?
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Image {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  originalName String?
+  alt       String?
+  title     String?
+  size      Int?     // file size in bytes
+  mimeType  String?
+  url       String   // full URL to image
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productImages ProductImage[]
+  sliders       Slider[]
+  posts         PostImage[]
+
+  @@map("images")
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String
+  slug         String   @unique
+  description  String?
+  shortDesc    String?  // for cards/previews
+  features     Json?    // ["Feature 1", "Feature 2", ...]
+  status       String   @default("active") // active, inactive, sold_out
+  sortOrder    Int      @default(0)
+  isVisible    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  categoryId    Int
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants      ProductVariant[]
+  images        ProductImage[]
+  reviews       Review[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id           Int     @id @default(autoincrement())
+  name         String  // "1 tháng", "3 tháng", "1 năm", "Premium", etc.
+  description  String?
+  price        Decimal @db.Decimal(10,2)
+  originalPrice Decimal? @db.Decimal(10,2) // giá gốc để hiện discount
+  isDefault    Boolean @default(false)
+  sortOrder    Int     @default(0)
+  isVisible    Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  productId    Int
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id        Int @id @default(autoincrement())
+  productId Int
+  imageId   Int
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  image     Image   @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, imageId])
+  @@map("product_images")
+}
+
+// ================================
+// E-COMMERCE
+// ================================
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  variantId Int
+  quantity  Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId, variantId])
+  @@map("cart_items")
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  orderNumber   String   @unique // ORD-20240101-001
+  userId        Int
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  totalAmount   Decimal  @db.Decimal(10,2)
+  status        String   @default("pending") // pending, confirmed, processing, completed, cancelled
+  notes         String?
+  adminNotes    String?  // ghi chú nội bộ
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id            Int     @id @default(autoincrement())
+  orderId       Int
+  productId     Int
+  variantId     Int
+  productName   String  // snapshot tên sản phẩm
+  variantName   String  // snapshot tên variant
+  price         Decimal @db.Decimal(10,2) // snapshot giá
+  quantity      Int     @default(1)
+  createdAt     DateTime @default(now())
+
+  // Relations
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product        @relation(fields: [productId], references: [id])
+  variant       ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@map("order_items")
+}
+
+// ================================
+// REVIEWS & FEEDBACK
+// ================================
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int      // 1-5 stars
+  title     String?
+  content   String?
+  isVisible Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // 1 user chỉ review 1 lần/sản phẩm
+  @@map("reviews")
+}
+
+// ================================
+// WEBSITE CONTENT
+// ================================
+model Slider {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String?
+  content   String?
+  buttonText String?
+  buttonLink String?
+  imageId   Int?
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  image     Image? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+
+  @@map("sliders")
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  excerpt   String?
+  content   String?
+  status    String   @default("published") // draft, published
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  images    PostImage[]
+
+  @@map("posts")
+}
+
+model PostImage {
+  id        Int @id @default(autoincrement())
+  postId    Int
+  imageId   Int
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  post      Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  image     Image @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, imageId])
+  @@map("post_images")
+}
+
+model FAQ {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+model ContactForm {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     // optional, có thể guest submit
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  status    String   @default("new") // new, replied, closed
+  adminReply String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("contact_forms")
+}
+
+// ================================
+// WEBSITE CONFIGURATION
+// ================================
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String?
+  type      String   @default("text") // text, json, boolean, number
+  group     String   @default("general") // general, social, payment, email
+  label     String?
+  description String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model Webdesign {
+  id        Int      @id @default(autoincrement())
+  page      String   @default("homepage") // homepage, about, contact
+  section   String   // hero, features, testimonials, etc.
+  config    Json     // flexible JSON config
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([page, section])
+  @@map("webdesigns")
 }
