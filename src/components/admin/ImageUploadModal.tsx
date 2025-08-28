@@ -14,6 +14,8 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
   const [dragActive, setDragActive] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
+  const [fileTitles, setFileTitles] = useState<string[]>([])
+  const [fileAlts, setFileAlts] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
@@ -54,19 +56,25 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
       return allowedTypes.includes(file.type)
     })
 
-    // Validate file sizes (max 5MB)
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    // Validate file sizes (max 10MB - will be optimized)
+    const maxSize = 10 * 1024 * 1024 // 10MB
     const validSizeFiles = validFiles.filter(file => file.size <= maxSize)
 
     if (validSizeFiles.length !== files.length) {
-      alert('Một số file không hợp lệ (chỉ chấp nhận JPG, PNG, GIF, WebP ≤ 5MB)')
+      alert('Một số file không hợp lệ (chỉ chấp nhận JPG, PNG, GIF, WebP ≤ 10MB)')
     }
 
     setSelectedFiles(validSizeFiles)
-    
+
     // Create previews
     const newPreviews = validSizeFiles.map(file => URL.createObjectURL(file))
     setPreviews(newPreviews)
+
+    // Initialize titles and alts with filename
+    const newTitles = validSizeFiles.map(file => file.name.split('.')[0])
+    const newAlts = validSizeFiles.map(file => file.name)
+    setFileTitles(newTitles)
+    setFileAlts(newAlts)
   }
 
   const removeFileFromList = (index: number) => {
@@ -76,6 +84,8 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
     // Remove from arrays
     setSelectedFiles(prev => prev.filter((_, i) => i !== index))
     setPreviews(prev => prev.filter((_, i) => i !== index))
+    setFileTitles(prev => prev.filter((_, i) => i !== index))
+    setFileAlts(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleUpload = async () => {
@@ -84,56 +94,28 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
     setUploading(true)
 
     try {
-      for (const file of selectedFiles) {
-        // Generate unique filename
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
-        const filePath = `images/${fileName}`
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i]
 
-        // Upload directly to Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from('banacc')
-          .upload(filePath, file, {
-            upsert: true,
-            contentType: file.type
-          })
+        // Create form data for new upload API
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('title', fileTitles[i] || file.name.split('.')[0])
+        formData.append('alt', fileAlts[i] || file.name)
 
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`)
-        }
-
-        // Get public URL - try both methods
-        const { data: { publicUrl } } = supabase.storage
-          .from('banacc')
-          .getPublicUrl(filePath)
-
-        console.log('Generated public URL:', publicUrl)
-
-        // Alternative: try signed URL if public doesn't work
-        // const { data: signedUrl } = await supabase.storage
-        //   .from('banacc')
-        //   .createSignedUrl(filePath, 60 * 60 * 24 * 365) // 1 year
-        // const finalUrl = signedUrl || publicUrl
-
-        // Save metadata to database via API
-        const response = await fetch('/api/admin/images', {
+        // Upload using new optimized API
+        const response = await fetch('/api/admin/images/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            filename: fileName,
-            originalName: file.name,
-            alt: file.name,
-            title: file.name,
-            size: file.size,
-            mimeType: file.type,
-            url: publicUrl
-          })
+          body: formData
         })
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Failed to save metadata')
+          throw new Error(error.error || 'Upload failed')
         }
+
+        const result = await response.json()
+        console.log('Upload successful:', result)
       }
       
       // Clean up previews
@@ -201,29 +183,71 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
             </p>
           </div>
 
-          {/* File Previews */}
+          {/* File Previews with Metadata */}
           {selectedFiles.length > 0 && (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-gray-900 mb-2">
                 Đã chọn ({selectedFiles.length})
               </h4>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+              <div className="space-y-4 max-h-96 overflow-y-auto">
                 {previews.map((preview, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                    <img
-                      src={preview}
-                      alt={selectedFiles[index].name}
-                      className="w-8 h-8 object-cover rounded"
-                    />
-                    <span className="text-xs text-gray-600 flex-1 truncate">
-                      {selectedFiles[index].name}
-                    </span>
-                    <button
-                      onClick={() => removeFileFromList(index)}
-                      className="text-red-500 hover:text-red-700 text-sm"
-                    >
-                      ×
-                    </button>
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={preview}
+                        alt={selectedFiles[index].name}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <div className="flex-1 space-y-2">
+                        <div className="text-xs text-gray-600 truncate">
+                          {selectedFiles[index].name}
+                        </div>
+
+                        {/* Title Input */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Tiêu đề (cho SEO)
+                          </label>
+                          <input
+                            type="text"
+                            value={fileTitles[index] || ''}
+                            onChange={(e) => {
+                              const newTitles = [...fileTitles]
+                              newTitles[index] = e.target.value
+                              setFileTitles(newTitles)
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Nhập tiêu đề cho ảnh..."
+                          />
+                        </div>
+
+                        {/* Alt Input */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Alt text
+                          </label>
+                          <input
+                            type="text"
+                            value={fileAlts[index] || ''}
+                            onChange={(e) => {
+                              const newAlts = [...fileAlts]
+                              newAlts[index] = e.target.value
+                              setFileAlts(newAlts)
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Mô tả ảnh cho accessibility..."
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => removeFileFromList(index)}
+                        className="text-red-500 hover:text-red-700 text-lg font-bold"
+                        title="Xóa ảnh"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
