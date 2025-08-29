@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { safeQuery, DatabaseHelper } from '@/lib/database-helper'
 
 // GET - List all categories
 export async function GET(request: NextRequest) {
@@ -19,8 +20,9 @@ export async function GET(request: NextRequest) {
       ]
     } : {}
 
+    // Sử dụng safeQuery với retry logic
     const [categories, total] = await Promise.all([
-      prisma.category.findMany({
+      safeQuery.findMany(prisma.category, {
         where,
         orderBy: [
           { sortOrder: 'asc' },
@@ -29,10 +31,10 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      prisma.category.count({ where })
+      safeQuery.count(prisma.category, { where })
     ])
 
-    const pages = Math.ceil(total / limit)
+    const pages = Math.ceil((total as number) / limit)
 
     return NextResponse.json({
       categories,
@@ -46,6 +48,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Categories API error:', error)
+    
+    // Nếu là lỗi connection, thử reconnect
+    if (error instanceof Error && error.message.includes('prepared statement')) {
+      console.log('Attempting database reconnection...')
+      await DatabaseHelper.reconnect()
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -74,8 +83,8 @@ export async function POST(request: NextRequest) {
       .replace(/\s+/g, '-')
       .trim()
 
-    // Check if slug already exists
-    const existingCategory = await prisma.category.findUnique({
+    // Check if slug already exists với safeQuery
+    const existingCategory = await safeQuery.findUnique(prisma.category, {
       where: { slug: finalSlug }
     })
 
@@ -86,7 +95,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const category = await prisma.category.create({
+    // Tạo category mới với safeQuery
+    const category = await safeQuery.create(prisma.category, {
       data: {
         name,
         description: description || null,
@@ -100,6 +110,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Category creation error:', error)
+    
+    // Nếu là lỗi connection, thử reconnect
+    if (error instanceof Error && error.message.includes('prepared statement')) {
+      console.log('Attempting database reconnection...')
+      await DatabaseHelper.reconnect()
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

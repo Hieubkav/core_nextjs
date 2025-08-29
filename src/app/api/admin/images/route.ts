@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { safeQuery, DatabaseHelper } from '@/lib/database-helper'
 
 // GET - List all images
 export async function GET(request: NextRequest) {
@@ -19,14 +20,15 @@ export async function GET(request: NextRequest) {
       ]
     } : {}
 
+    // Sử dụng safeQuery với enhanced retry logic
     const [images, total] = await Promise.all([
-      prisma.image.findMany({
+      safeQuery.findMany(prisma.image, {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      prisma.image.count({ where })
+      safeQuery.count(prisma.image, { where })
     ])
 
     return NextResponse.json({
@@ -34,13 +36,20 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: total as number,
+        pages: Math.ceil((total as number) / limit)
       }
     })
 
   } catch (error) {
     console.error('Images API error:', error)
+    
+    // Smart error handling với reconnection
+    if (error instanceof Error && DatabaseHelper.isPreparedStatementError && DatabaseHelper.isPreparedStatementError(error)) {
+      console.log('🔄 Attempting smart recovery...')
+      await DatabaseHelper.smartReconnect()
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

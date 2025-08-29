@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { safeQuery, DatabaseHelper } from '@/lib/database-helper'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get counts for sidebar badges
+    // Get counts for sidebar badges với safeQuery
     const [imagesCount, categoriesCount] = await Promise.all([
-      prisma.image.count(),
-      prisma.category.count()
+      safeQuery.count(prisma.image),
+      safeQuery.count(prisma.category)
     ])
 
     return NextResponse.json({
@@ -15,6 +16,13 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Sidebar counts API error:', error)
+    
+    // Nếu là lỗi connection, thử reconnect
+    if (error instanceof Error && error.message.includes('prepared statement')) {
+      console.log('Attempting database reconnection...')
+      await DatabaseHelper.reconnect()
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch sidebar counts' },
       { status: 500 }
