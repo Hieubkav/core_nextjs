@@ -37,20 +37,52 @@ interface ProductVariant {
   originalPriceError?: string
 }
 
-interface ProductCreateModalProps {
+interface Product {
+  id: number
+  name: string
+  slug: string
+  description?: string
+  shortDesc?: string
+  features: string[]
+  categoryId: number
+  sortOrder: number
+  isVisible: boolean
+  isPublished: boolean
+  status?: string
+  category: {
+    id: number
+    name: string
+    slug: string
+  }
+  variants: ProductVariant[]
+  images: {
+    id: number
+    sortOrder: number
+    image: {
+      id: number
+      url: string
+      alt: string
+      title: string
+    }
+  }[]
+}
+
+interface ProductEditModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  product: Product | null
 }
 
-export default function ProductCreateModal({ isOpen, onClose, onSuccess }: ProductCreateModalProps) {
+export default function ProductEditModal({ isOpen, onClose, onSuccess, product }: ProductEditModalProps) {
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [images, setImages] = useState<LibraryImage[]>([])
   const [showImageSelector, setShowImageSelector] = useState(false)
+  const [isDataLoaded, setIsDataLoaded] = useState(false)
   const { showSuccess, showError, showWarning } = useToast()
 
-  // Form data
+  // Form data với giá trị mặc định an toàn
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -83,50 +115,79 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
   const [selectedImageIds, setSelectedImageIds] = useState<number[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Load data khi modal mở
+  // Load data khi modal mở hoặc product thay đổi
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && product) {
+      // Populate dữ liệu trước khi fetch
+      populateFormData()
+      setIsDataLoaded(true)
       fetchCategories()
       fetchImages()
     }
-  }, [isOpen])
+  }, [isOpen, product])
 
-  // Reset form khi đóng modal
+  // Reset lỗi khi đóng modal
   useEffect(() => {
     if (!isOpen) {
-      setFormData({
-        name: '',
-        slug: '',
-        description: '',
-        shortDesc: '',
-        categoryId: '',
-        isVisible: true,
-        isPublished: false,
-        sortOrder: 0
-      })
-      setVariants([
-        {
-          name: 'Mặc định',
-          description: '',
-          price: 0,
-          originalPrice: 0,
-          stock: 0,
-          isDefault: true,
-          isVisible: true,
-          sortOrder: 0,
-          priceInput: '',
-          priceValid: true,
-          priceError: '',
-          originalPriceInput: '',
-          originalPriceValid: true,
-          originalPriceError: ''
-        }
-      ])
-      setSelectedImageIds([])
       setErrors({})
       setShowImageSelector(false)
+      setIsDataLoaded(false)
     }
   }, [isOpen])
+
+  // Tạo function để populate dữ liệu vào form với kiểm tra an toàn
+  const populateFormData = () => {
+    if (!product) return
+
+    setFormData({
+      name: product.name || '',
+      slug: product.slug || '',
+      description: product.description || '',
+      shortDesc: product.shortDesc || '',
+      categoryId: product.categoryId ? product.categoryId.toString() : '',
+      isVisible: Boolean(product.isVisible),
+      isPublished: Boolean(product.isPublished),
+      sortOrder: product.sortOrder || 0
+    })
+
+    // Populate variants với validation fields an toàn
+    const populatedVariants = (product.variants || []).map(variant => ({
+      ...variant,
+      name: variant.name || '',
+      description: variant.description || '',
+      price: variant.price || 0,
+      originalPrice: variant.originalPrice || 0,
+      stock: variant.stock || 0,
+      priceInput: (variant.price || 0).toString(),
+      priceValid: true,
+      priceError: '',
+      originalPriceInput: variant.originalPrice ? variant.originalPrice.toString() : '',
+      originalPriceValid: true,
+      originalPriceError: ''
+    }))
+    setVariants(populatedVariants.length > 0 ? populatedVariants : [
+      {
+        name: 'Mặc định',
+        description: '',
+        price: 0,
+        originalPrice: 0,
+        stock: 0,
+        isDefault: true,
+        isVisible: true,
+        sortOrder: 0,
+        priceInput: '',
+        priceValid: true,
+        priceError: '',
+        originalPriceInput: '',
+        originalPriceValid: true,
+        originalPriceError: ''
+      }
+    ])
+
+    // Populate selected images an toàn
+    const imageIds = (product.images || []).map(img => img.image?.id).filter(Boolean)
+    setSelectedImageIds(imageIds)
+  }
 
   const fetchCategories = async () => {
     try {
@@ -304,7 +365,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
+    if (!validateForm() || !product) {
       // Hiển thị lỗi cụ thể đầu tiên thay vì thông báo chung
       const firstError = Object.values(errors)[0]
       if (firstError) {
@@ -327,8 +388,8 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
         imageIds: selectedImageIds
       }
 
-      const response = await fetch('/api/admin/products', {
-        method: 'POST',
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -338,16 +399,15 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
       const result = await response.json()
 
       if (result.success) {
-        showSuccess('Tạo thành công', `Sản phẩm "${formData.name}" đã được tạo`)
+        showSuccess('Cập nhật thành công', `Sản phẩm "${formData.name}" đã được cập nhật`)
         onSuccess()
-        resetForm()
       } else {
         // Hiển thị lỗi cụ thể từ API
         const errorMessage = result.error || result.details || 'Có lỗi xảy ra'
-        showError('Lỗi tạo sản phẩm', errorMessage)
+        showError('Lỗi cập nhật sản phẩm', errorMessage)
       }
     } catch (error) {
-      console.error('Error creating product:', error)
+      console.error('Error updating product:', error)
       if (error instanceof Error) {
         if (error.message.includes('fetch')) {
           showError('Lỗi kết nối', 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.')
@@ -355,45 +415,14 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
           showError('Lỗi hệ thống', error.message)
         }
       } else {
-        showError('Lỗi không xác định', 'Có lỗi xảy ra khi tạo sản phẩm')
+        showError('Lỗi không xác định', 'Có lỗi xảy ra khi cập nhật sản phẩm')
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      slug: '',
-      description: '',
-      shortDesc: '',
-      categoryId: '',
-      isVisible: true,
-      isPublished: false,
-      sortOrder: 0
-    })
-    setVariants([
-      {
-        name: 'Mặc định',
-        description: '',
-        price: 0,
-        originalPrice: 0,
-        stock: 0,
-        isDefault: true,
-        isVisible: true,
-        sortOrder: 0,
-        priceInput: '',
-        priceValid: true,
-        priceError: '',
-        originalPriceInput: '',
-        originalPriceValid: true,
-        originalPriceError: ''
-      }
-    ])
-    setSelectedImageIds([])
-    setErrors({})
-  }
+
 
   const handleImageSelect = (imageId: number) => {
     setSelectedImageIds(prev => {
@@ -414,14 +443,14 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
 
   const selectedImages = images?.filter(img => selectedImageIds.includes(img.id)) || []
 
-  if (!isOpen) return null
+  if (!isOpen || !product || !isDataLoaded) return null
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Tạo sản phẩm mới</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Chỉnh sửa sản phẩm</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -826,7 +855,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
             disabled={loading}
             className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {loading ? 'Đang tạo...' : 'Tạo sản phẩm'}
+            {loading ? 'Đang cập nhật...' : 'Cập nhật sản phẩm'}
           </button>
         </div>
       </div>
