@@ -146,7 +146,8 @@ export default function ProductEditModal({ isOpen, onClose, onSuccess, product }
       shortDesc: product.shortDesc || '',
       categoryId: product.categoryId ? product.categoryId.toString() : '',
       isVisible: Boolean(product.isVisible),
-      isPublished: Boolean(product.isPublished),
+      // Map status field to isPublished
+      isPublished: product.status === 'active',
       sortOrder: product.sortOrder || 0
     })
 

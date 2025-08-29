@@ -89,7 +89,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (isPublished !== null) {
-      whereConditions.isPublished = isPublished === 'true'
+      // Map isPublished filter to status field
+      whereConditions.status = isPublished === 'true' ? 'active' : 'inactive'
     }
 
     // Get products with relations
@@ -147,9 +148,15 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalCount / limit)
 
+    // Map status field to isPublished for frontend compatibility
+    const mappedProducts = products.map(product => ({
+      ...product,
+      isPublished: product.status === 'active'
+    }))
+
     return NextResponse.json({
       success: true,
-      data: products,
+      data: mappedProducts,
       pagination: {
         page,
         limit,
@@ -319,10 +326,16 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Created product: ${name}`)
 
+    // Map status field to isPublished for frontend compatibility
+    const mappedProduct = {
+      ...product,
+      isPublished: product?.status === 'active'
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Tạo sản phẩm thành công',
-      data: product
+      data: mappedProduct
     }, { status: 201 })
 
   } catch (error) {

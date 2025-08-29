@@ -62,7 +62,10 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: product
+      data: {
+        ...product,
+        isPublished: product.status === 'active'
+      }
     })
 
   } catch (error) {
@@ -103,6 +106,7 @@ export async function PUT(
       imageIds,
       sortOrder, 
       isVisible, 
+      isPublished,
       status 
     } = body
 
@@ -168,7 +172,10 @@ export async function PUT(
           categoryId: parseInt(categoryId),
           sortOrder: sortOrder !== undefined ? parseInt(sortOrder) : undefined,
           isVisible: isVisible !== undefined ? Boolean(isVisible) : undefined,
-          status: status || undefined
+          // Map isPublished to status field
+          status: isPublished !== undefined 
+            ? (Boolean(isPublished) ? 'active' : 'inactive')
+            : (status || undefined)
         }
       })
 
@@ -257,7 +264,10 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       message: 'Cập nhật sản phẩm thành công',
-      data: product
+      data: {
+        ...product,
+        isPublished: product?.status === 'active'
+      }
     })
 
   } catch (error) {
