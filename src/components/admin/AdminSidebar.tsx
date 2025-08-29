@@ -20,7 +20,7 @@ import { useSidebarCounts } from '@/hooks/useSidebarCounts'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Sản phẩm', href: '/admin/products', icon: ShoppingBagIcon },
+  { name: 'Sản phẩm', href: '/admin/products', icon: ShoppingBagIcon, showBadge: 'products' },
   { name: 'Danh mục', href: '/admin/categories', icon: TagIcon, showBadge: 'categories' },
   { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCartIcon },
   { name: 'Khách hàng', href: '/admin/customers', icon: UsersIcon },

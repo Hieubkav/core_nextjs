@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react'
 interface SidebarCounts {
   images: number
   categories: number
+  products: number
 }
 
 export function useSidebarCounts() {
   const [counts, setCounts] = useState<SidebarCounts>({
     images: 0,
-    categories: 0
+    categories: 0,
+    products: 0
   })
   const [loading, setLoading] = useState(true)
 

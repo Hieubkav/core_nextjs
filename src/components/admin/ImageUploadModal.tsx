@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { XMarkIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline'
+import { useToast } from '@/components/common/ToastProvider'
 
 interface ImageUploadModalProps {
   onClose: () => void
@@ -17,6 +18,7 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
   const [fileTitles, setFileTitles] = useState<string[]>([])
   const [fileAlts, setFileAlts] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { showSuccess, showError, showWarning } = useToast()
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -61,7 +63,7 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
     const validSizeFiles = validFiles.filter(file => file.size <= maxSize)
 
     if (validSizeFiles.length !== files.length) {
-      alert('Một số file không hợp lệ (chỉ chấp nhận JPG, PNG, GIF, WebP ≤ 10MB)')
+      showWarning('File không hợp lệ', 'Một số file không hợp lệ (chỉ chấp nhận JPG, PNG, GIF, WebP ≤ 10MB)')
     }
 
     setSelectedFiles(validSizeFiles)
@@ -121,10 +123,11 @@ export default function ImageUploadModal({ onClose, onSuccess }: ImageUploadModa
       // Clean up previews
       previews.forEach(preview => URL.revokeObjectURL(preview))
       
+      showSuccess('Upload thành công', `Đã upload ${selectedFiles.length} ảnh thành công`)
       onSuccess()
     } catch (error) {
       console.error('Upload error:', error)
-      alert(`Có lỗi xảy ra: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      showError('Lỗi upload', `Có lỗi xảy ra: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setUploading(false)
     }
