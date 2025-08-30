@@ -19,7 +19,6 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   cart          Cart?
-  contactForms  ContactForm[]
   reviews       Review[]
 
   @@map("users")
@@ -50,7 +49,7 @@ model Category {
   sortOrder   Int       @default(0)
   isVisible   Boolean   @default(true)
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime @updatedAt
   products    Product[]
 
   @@map("categories")
@@ -69,7 +68,7 @@ model Image {
   isVisible     Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  posts         PostImage[]
+ posts         PostImage[]
   productImages ProductImage[]
   sliders       Slider[]
 
@@ -90,7 +89,7 @@ model Product {
   updatedAt   DateTime         @updatedAt
   categoryId  Int
   cartItems   CartItem[]
-  orderItems  OrderItem[]
+  orderItems OrderItem[]
   images      ProductImage[]
   variants    ProductVariant[]
   category    Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -267,24 +266,7 @@ model FAQ {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("faqs")
-}
-
-model ContactForm {
-  id         Int      @id @default(autoincrement())
-  userId     Int?
-  name       String
-  email      String
-  phone      String?
-  subject    String?
-  message    String
-  status     String   @default("new")
-  adminReply String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User?    @relation(fields: [userId], references: [id])
-
-  @@map("contact_forms")
+ @@map("faqs")
 }
 
 model Setting {
@@ -312,7 +294,7 @@ model Webdesign {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([page, section])
+ @@unique([page, section])
   @@map("webdesigns")
 }
 

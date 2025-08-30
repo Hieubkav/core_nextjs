@@ -29,7 +29,6 @@ const navigation = [
   { name: 'Slider', href: '/admin/sliders', icon: PaintBrushIcon, showBadge: 'sliders' },
   { name: 'Bài viết', href: '/admin/posts', icon: DocumentTextIcon },
   { name: 'FAQ', href: '/admin/faqs', icon: QuestionMarkCircleIcon },
-  { name: 'Liên hệ', href: '/admin/contacts', icon: ChatBubbleLeftRightIcon },
   { name: 'Giao diện', href: '/admin/webdesign', icon: PaintBrushIcon },
   { name: 'Cài đặt', href: '/admin/settings', icon: CogIcon },
 ]
