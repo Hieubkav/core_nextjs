@@ -24,7 +24,7 @@ const navigation = [
   { name: 'Danh mục', href: '/admin/categories', icon: TagIcon, showBadge: 'categories' },
   { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCartIcon, showBadge: 'orders' },
   { name: 'Khách hàng', href: '/admin/customers', icon: UsersIcon, showBadge: 'customers' },
-  { name: 'Đánh giá', href: '/admin/reviews', icon: StarIcon },
+  { name: 'Đánh giá', href: '/admin/reviews', icon: StarIcon, showBadge: 'reviews' },
   { name: 'Hình ảnh', href: '/admin/images', icon: PhotoIcon, showBadge: 'images' },
   { name: 'Slider', href: '/admin/sliders', icon: PaintBrushIcon, showBadge: 'sliders' },
   { name: 'Bài viết', href: '/admin/posts', icon: DocumentTextIcon },

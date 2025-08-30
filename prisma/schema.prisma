@@ -19,7 +19,6 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   cart          Cart?
-  reviews       Review[]
 
   @@map("users")
 }
@@ -37,6 +36,7 @@ model Customer {
   createdAt     DateTime? @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
   orders        Order[]
+  reviews       Review[]
 
   @@map("customers")
 }
@@ -195,7 +195,7 @@ model OrderItem {
 
 model Review {
   id        Int      @id @default(autoincrement())
-  userId    Int
+  customerId Int
   productId Int
   rating    Int
   title     String?
@@ -204,10 +204,10 @@ model Review {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer  Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId])
+  @@unique([customerId, productId])
   @@map("reviews")
 }
 
