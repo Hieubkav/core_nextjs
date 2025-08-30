@@ -250,6 +250,9 @@ export default function OrderCreateModal({
         totalAmount: calculateTotal()
       }
 
+      // Log request để debug
+      console.log('Sending order creation request:', orderData);
+      
       const response = await fetch('/api/admin/orders/create', {
         method: 'POST',
         headers: {
@@ -257,6 +260,11 @@ export default function OrderCreateModal({
         },
         body: JSON.stringify(orderData),
       })
+      
+      // Log response để debug
+      console.log('Received response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers));
 
       if (response.ok) {
         const result = await response.json()
@@ -264,12 +272,52 @@ export default function OrderCreateModal({
         onSuccess()
         onClose()
       } else {
-        const error = await response.json()
-        showError('Lỗi', error.error || 'Không thể tạo đơn hàng')
+        try {
+          const errorText = await response.text();
+          console.log('Raw error response:', errorText);
+          
+          // Kiểm tra nếu response rỗng
+          if (!errorText) {
+            console.error('Empty error response from server. Status:', response.status);
+            showError('Lỗi', `Không thể tạo đơn hàng - Lỗi từ máy chủ (Status: ${response.status})`);
+            return;
+          }
+          
+          // Thử parse JSON
+          let error;
+          try {
+            error = JSON.parse(errorText);
+          } catch (parseError) {
+            // Nếu không parse được JSON, hiển thị lỗi chung với nội dung response
+            console.error('Error parsing error response. Status:', response.status);
+            console.error('Response text:', errorText);
+            showError('Lỗi', `Không thể tạo đơn hàng - Lỗi từ máy chủ (Status: ${response.status})\nChi tiết: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`);
+            return;
+          }
+          
+          // Kiểm tra cấu trúc error object
+          console.log('Parsed error object:', error);
+          
+          // Hiển thị chi tiết lỗi nếu có
+          const errorMessage = (error && error.error) || 'Không thể tạo đơn hàng';
+          const errorDetails = (error && error.details) ? `\nChi tiết: ${error.details}` : '';
+          const stackTrace = (error && error.stack) ? `\nStack trace: ${error.stack}` : '';
+          showError('Lỗi', errorMessage + errorDetails + stackTrace);
+          
+          // Log lỗi chi tiết ra console để debug
+          console.error('Order creation error details:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: error
+          });
+        } catch (unexpectedError) {
+          console.error('Unexpected error in error handling:', unexpectedError);
+          showError('Lỗi', 'Không thể tạo đơn hàng - Lỗi xử lý không xác định');
+        }
       }
     } catch (error) {
       console.error('Error creating order:', error)
-      showError('Lỗi', 'Có lỗi xảy ra khi tạo đơn hàng')
+      showError('Lỗi', 'Có lỗi xảy ra khi tạo đơn hàng: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
       setLoading(false)
     }

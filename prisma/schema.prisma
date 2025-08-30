@@ -20,7 +20,6 @@ model User {
   updatedAt     DateTime      @updatedAt
   cart          Cart?
   contactForms  ContactForm[]
-  orders        Order[]
   reviews       Review[]
 
   @@map("users")
@@ -38,6 +37,7 @@ model Customer {
   isActive      Boolean?  @default(true)
   createdAt     DateTime? @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  orders        Order[]
 
   @@map("customers")
 }
@@ -161,7 +161,7 @@ model CartItem {
 model Order {
   id            Int         @id @default(autoincrement())
   orderNumber   String      @unique
-  userId        Int
+  customerId    Int
   customerName  String
   customerEmail String
   customerPhone String?
@@ -172,7 +172,7 @@ model Order {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   items         OrderItem[]
-  user          User        @relation(fields: [userId], references: [id])
+  customer      Customer    @relation(fields: [customerId], references: [id])
 
   @@map("orders")
 }
