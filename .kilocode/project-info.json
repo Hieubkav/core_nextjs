@@ -1,0 +1,37 @@
+{
+  "projectName": "150s_Prisma",
+  "description": "Next.js application with Prisma ORM for e-commerce/admin dashboard",
+  "technologies": {
+    "frontend": ["Next.js", "React", "TypeScript"],
+    "backend": ["Next.js API Routes", "Prisma ORM"],
+    "database": ["PostgreSQL"],
+    "authentication": ["NextAuth.js"],
+    "storage": ["Supabase Storage"],
+    "styling": ["Tailwind CSS"]
+  },
+  "directoryStructure": {
+    "src": {
+      "app": "Main application pages and layouts",
+      "components": "Reusable UI components",
+      "hooks": "Custom React hooks",
+      "lib": "Utility functions and configurations",
+      "types": "TypeScript type definitions"
+    },
+    "prisma": "Prisma schema and database models",
+    "scripts": "Utility scripts for seeding and setup",
+    "public": "Static assets"
+  },
+  "keyFeatures": [
+    "Admin dashboard with CRUD operations for products, categories, images",
+    "Authentication with NextAuth.js",
+    "Image upload and management",
+    "Settings management",
+    "Database operations with Prisma ORM"
+  ],
+  "entryPoints": {
+    "main": "src/app/page.tsx",
+    "admin": "src/app/admin/page.tsx",
+    "api": "src/app/api/"
+  },
+  "createdDate": "2025-08-30"
+}
