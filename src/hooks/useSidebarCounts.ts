@@ -4,13 +4,15 @@ interface SidebarCounts {
   images: number
   categories: number
   products: number
+  orders: number
 }
 
 export function useSidebarCounts() {
   const [counts, setCounts] = useState<SidebarCounts>({
     images: 0,
     categories: 0,
-    products: 0
+    products: 0,
+    orders: 0
   })
   const [loading, setLoading] = useState(true)
 
@@ -23,7 +25,12 @@ export function useSidebarCounts() {
       const response = await fetch('/api/admin/sidebar-counts')
       if (response.ok) {
         const data = await response.json()
-        setCounts(data)
+        setCounts({
+          images: data.images || 0,
+          categories: data.categories || 0,
+          products: data.products || 0,
+          orders: data.orders || 0
+        })
       }
     } catch (error) {
       console.error('Error fetching sidebar counts:', error)

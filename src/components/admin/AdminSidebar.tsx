@@ -22,7 +22,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Sản phẩm', href: '/admin/products', icon: ShoppingBagIcon, showBadge: 'products' },
   { name: 'Danh mục', href: '/admin/categories', icon: TagIcon, showBadge: 'categories' },
-  { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCartIcon },
+  { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCartIcon, showBadge: 'orders' },
   { name: 'Khách hàng', href: '/admin/customers', icon: UsersIcon },
   { name: 'Đánh giá', href: '/admin/reviews', icon: StarIcon },
   { name: 'Hình ảnh', href: '/admin/images', icon: PhotoIcon, showBadge: 'images' },
