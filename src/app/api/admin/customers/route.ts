@@ -13,9 +13,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
 
     // Xây dựng điều kiện tìm kiếm
-    const whereConditions: any = {
-      role: 'customer' // Chỉ lấy khách hàng
-    }
+    const whereConditions: any = {}
 
     // Tìm kiếm theo tên hoặc email
     if (search) {
@@ -28,7 +26,7 @@ export async function GET(request: NextRequest) {
     // Lấy danh sách khách hàng với phân trang
     const [customers, totalCount] = await Promise.all([
       DatabaseHelper.executeWithRetry(async () => {
-        return await prisma.user.findMany({
+        return await prisma.customer.findMany({
           where: whereConditions,
           orderBy: {
             createdAt: 'desc'
@@ -38,7 +36,7 @@ export async function GET(request: NextRequest) {
         })
       }),
       DatabaseHelper.executeWithRetry(async () => {
-        return await prisma.user.count({
+        return await prisma.customer.count({
           where: whereConditions
         })
       })
@@ -60,7 +58,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Customers API GET error:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Lỗi khi lấy danh sách khách hàng',
         details: error instanceof Error ? error.message : 'Unknown error'

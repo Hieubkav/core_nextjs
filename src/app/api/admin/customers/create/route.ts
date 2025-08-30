@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { DatabaseHelper } from '@/lib/database-helper'
-import bcrypt from 'bcryptjs'
-
-// Add bcryptjs to package.json dependencies
-// "bcryptjs": "^2.4.3"
 
 // POST - Tạo khách hàng mới
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, password } = body
+    const { name, email } = body
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || !email) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Tên, email và mật khẩu là bắt buộc' 
+          error: 'Tên và email là bắt buộc'
         },
         { status: 400 }
       )
@@ -27,37 +23,34 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Email không hợp lệ' 
+          error: 'Email không hợp lệ'
         },
         { status: 400 }
       )
     }
 
     // Check if email already exists
-    const existingUser = await DatabaseHelper.executeWithRetry(async () => {
-      return await prisma.user.findUnique({
+    const existingCustomer = await DatabaseHelper.executeWithRetry(async () => {
+      return await prisma.customer.findUnique({
         where: { email }
       })
     })
 
-    if (existingUser) {
+    if (existingCustomer) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Email đã được sử dụng' 
+          error: 'Email đã được sử dụng'
         },
         { status: 400 }
       )
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
-
     // Create customer
     const customer = await DatabaseHelper.executeWithRetry(async () => {
-      return await prisma.user.create({
+      return await prisma.customer.create({
         data: {
           name,
           email,
@@ -78,7 +71,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Customer creation error:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Lỗi khi tạo khách hàng',
         details: error instanceof Error ? error.message : 'Unknown error'

@@ -1,23 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  MagnifyingGlassIcon, 
-  EyeIcon,
-  EyeSlashIcon,
+import {
+  MagnifyingGlassIcon,
   PlusIcon
 } from '@heroicons/react/24/outline'
+import { useToast } from '@/components/common/ToastProvider'
 
 interface Customer {
   id: number
-  name: string
+  name: string | null
   email: string
-  phone: string | null
-  role: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-  password?: string // Only for admin view
+  role: string | null
+  isActive: boolean | null
+  createdAt: string | null
+  updatedAt: string | null
 }
 
 interface Pagination {
@@ -28,6 +25,7 @@ interface Pagination {
 }
 
 export default function AdminCustomers() {
+  const { showError, showSuccess } = useToast()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -37,16 +35,13 @@ export default function AdminCustomers() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [showPassword, setShowPassword] = useState<Record<number, boolean>>({})
   
   // Form tạo khách hàng mới
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creatingCustomer, setCreatingCustomer] = useState(false)
   const [newCustomer, setNewCustomer] = useState({
     name: '',
-    email: '',
-    phone: '',
-    password: ''
+    email: ''
   })
 
   useEffect(() => {
@@ -81,7 +76,8 @@ export default function AdminCustomers() {
     fetchCustomers()
   }
 
- const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Chưa có'
     return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: '2-digit',
@@ -89,13 +85,6 @@ export default function AdminCustomers() {
       hour: '2-digit',
       minute: '2-digit'
     })
-  }
-
-  const togglePasswordVisibility = (customerId: number) => {
-    setShowPassword(prev => ({
-      ...prev,
-      [customerId]: !prev[customerId]
-    }))
   }
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
@@ -108,7 +97,10 @@ export default function AdminCustomers() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newCustomer),
+        body: JSON.stringify({
+          name: newCustomer.name,
+          email: newCustomer.email
+        }),
       })
 
       if (response.ok) {
@@ -116,19 +108,18 @@ export default function AdminCustomers() {
         // Reset form
         setNewCustomer({
           name: '',
-          email: '',
-          phone: '',
-          password: ''
+          email: ''
         })
         setShowCreateModal(false)
         fetchCustomers() // Refresh customer list
+        showSuccess('Thành công', 'Khách hàng đã được tạo thành công')
       } else {
         const error = await response.json()
-        alert(error.error || 'Không thể tạo khách hàng')
+        showError('Lỗi', error.error || 'Không thể tạo khách hàng')
       }
     } catch (error) {
       console.error('Error creating customer:', error)
-      alert('Có lỗi xảy ra khi tạo khách hàng')
+      showError('Lỗi', 'Có lỗi xảy ra khi tạo khách hàng')
     } finally {
       setCreatingCustomer(false)
     }
@@ -201,12 +192,6 @@ export default function AdminCustomers() {
                         Email
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Số điện thoại
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Mật khẩu
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Trạng thái
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -219,43 +204,17 @@ export default function AdminCustomers() {
                       <tr key={customer.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {customer.name}
+                            {customer.name || 'Chưa có tên'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{customer.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {customer.phone || 'Chưa có'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {customer.password ? (
-                            <div className="flex items-center">
-                              <span className="text-sm text-gray-900">
-                                {showPassword[customer.id] ? customer.password : '••••'}
-                              </span>
-                              <button
-                                onClick={() => togglePasswordVisibility(customer.id)}
-                                className="ml-2 text-gray-500 hover:text-gray-700"
-                              >
-                                {showPassword[customer.id] ? (
-                                  <EyeSlashIcon className="h-4 w-4" />
-                                ) : (
-                                  <EyeIcon className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-500">Chưa đặt</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             customer.isActive 
                               ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
+                              : 'bg-red-10 text-red-800'
                           }`}>
                             {customer.isActive ? 'Hoạt động' : 'Vô hiệu'}
                           </span>
@@ -316,7 +275,7 @@ export default function AdminCustomers() {
 
       {/* Create Customer Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Thêm khách hàng mới</h2>
@@ -340,7 +299,7 @@ export default function AdminCustomers() {
                     type="text"
                     value={newCustomer.name}
                     onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-50"
                     placeholder="Nhập tên khách hàng"
                     required
                   />
@@ -356,33 +315,6 @@ export default function AdminCustomers() {
                     onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nhập email khách hàng"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="text"
-                    value={newCustomer.phone}
-                    onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mật khẩu *
-                  </label>
-                  <input
-                    type="password"
-                    value={newCustomer.password}
-                    onChange={(e) => setNewCustomer({...newCustomer, password: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập mật khẩu"
                     required
                   />
                 </div>
