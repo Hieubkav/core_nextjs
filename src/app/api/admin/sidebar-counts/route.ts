@@ -5,18 +5,22 @@ import { safeQuery, DatabaseHelper } from '@/lib/database-helper'
 export async function GET(request: NextRequest) {
   try {
     // Get counts for sidebar badges với safeQuery
-    const [imagesCount, categoriesCount, productsCount, ordersCount] = await Promise.all([
+    const [imagesCount, categoriesCount, productsCount, ordersCount, slidersCount, customersCount] = await Promise.all([
       safeQuery.count(prisma.image),
       safeQuery.count(prisma.category),
       safeQuery.count(prisma.product),
-      safeQuery.count(prisma.order)
+      safeQuery.count(prisma.order),
+      safeQuery.count(prisma.slider),
+      safeQuery.count(prisma.customer)
     ])
 
     return NextResponse.json({
       images: imagesCount,
       categories: categoriesCount,
       products: productsCount,
-      orders: ordersCount
+      orders: ordersCount,
+      sliders: slidersCount,
+      customers: customersCount
     })
   } catch (error) {
     console.error('Sidebar counts API error:', error)
