@@ -9,6 +9,7 @@ interface SidebarCounts {
   customers: number
   reviews: number
   faqs: number
+  posts: number
 }
 
 export function useSidebarCounts() {
@@ -20,7 +21,8 @@ export function useSidebarCounts() {
     sliders: 0,
     customers: 0,
     reviews: 0,
-    faqs: 0
+    faqs: 0,
+    posts: 0
   })
   const [loading, setLoading] = useState(true)
 
@@ -41,7 +43,8 @@ export function useSidebarCounts() {
           sliders: data.sliders || 0,
           customers: data.customers || 0,
           reviews: data.reviews || 0,
-          faqs: data.faqs || 0
+          faqs: data.faqs || 0,
+          posts: data.posts || 0
         })
       }
     } catch (error) {
