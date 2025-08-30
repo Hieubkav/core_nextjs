@@ -6,7 +6,7 @@ import { DatabaseHelper } from '@/lib/database-helper'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email } = body
+    const { name, email, password, sdt, diaChi, ghiChu } = body
 
     // Validate required fields
     if (!name || !email) {
@@ -54,7 +54,10 @@ export async function POST(request: NextRequest) {
         data: {
           name,
           email,
-          role: 'customer',
+          password: password || null, // Không hash password
+          sdt: sdt || null,
+          diaChi: diaChi || null,
+          ghiChu: ghiChu || null,
           isActive: true
         }
       })

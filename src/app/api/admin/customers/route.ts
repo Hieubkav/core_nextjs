@@ -15,11 +15,13 @@ export async function GET(request: NextRequest) {
     // Xây dựng điều kiện tìm kiếm
     const whereConditions: any = {}
 
-    // Tìm kiếm theo tên hoặc email
+    // Tìm kiếm theo tên, email, sdt hoặc diaChi
     if (search) {
       whereConditions.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } }
+        { email: { contains: search, mode: 'insensitive' } },
+        { sdt: { contains: search, mode: 'insensitive' } },
+        { diaChi: { contains: search, mode: 'insensitive' } }
       ]
     }
 
