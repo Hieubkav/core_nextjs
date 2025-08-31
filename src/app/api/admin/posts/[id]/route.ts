@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { RouteCtx } from '@/lib/route-types'
 
 // GET - Get single Post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     const post = await prisma.post.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         thumbnail: true
       }
@@ -35,9 +37,10 @@ export async function GET(
 // PUT - Update Post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     const body = await request.json()
     const { title, slug, excerpt, content, sortOrder, isVisible, status, thumbnailId } = body
 
@@ -50,7 +53,7 @@ export async function PUT(
     }
 
     const post = await prisma.post.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         title,
         slug,
@@ -77,12 +80,13 @@ export async function PUT(
 // DELETE - Delete Post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     // Check if Post exists
     const post = await prisma.post.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     })
 
     if (!post) {
@@ -94,7 +98,7 @@ export async function DELETE(
 
     // Delete Post
     await prisma.post.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     })
 
     return NextResponse.json({ success: true })

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { DatabaseHelper } from '@/lib/database-helper'
+import { RouteCtx } from '@/lib/route-types'
 
 // GET - Get single customer
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
-  try {
+ try {
+    const { id } = await params;
     const customer = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.customer.findUnique({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt(id) }
       })
     })
 
@@ -45,9 +47,10 @@ export async function GET(
 // PUT - Update customer
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     const body = await request.json()
     const { name, email, password, sdt, diaChi, ghiChu, isActive } = body
 
@@ -79,7 +82,7 @@ export async function PUT(
       return await prisma.customer.findFirst({
         where: {
           email: email,
-          id: { not: parseInt(params.id) }
+          id: { not: parseInt(id) }
         }
       })
     })
@@ -97,7 +100,7 @@ export async function PUT(
     // Update customer
     const customer = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.customer.update({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(id) },
         data: {
           name,
           email,
@@ -134,13 +137,14 @@ export async function PUT(
 // DELETE - Delete customer
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     // Check if customer exists
     const customer = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.customer.findUnique({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt(id) }
       })
     })
 
@@ -157,7 +161,7 @@ export async function DELETE(
     // Delete customer
     await DatabaseHelper.executeWithRetry(async () => {
       await prisma.customer.delete({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt(id) }
       })
     })
 

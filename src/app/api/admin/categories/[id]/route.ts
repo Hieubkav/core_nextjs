@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { RouteCtx } from '@/lib/route-types'
 import { prisma } from '@/lib/prisma'
 
 // GET - Get single category
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
-    const resolvedParams = await params;
+    const { id } = await params;
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(resolvedParams.id) }
+      where: { id: parseInt(id) }
     })
 
     if (!category) {
@@ -33,10 +34,10 @@ export async function GET(
 // PUT - Update category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
-    const resolvedParams = await params;
+    const { id } = await params;
     const body = await request.json()
     const { name, description, slug, sortOrder, isVisible } = body
 
@@ -59,7 +60,7 @@ export async function PUT(
     const existingCategory = await prisma.category.findFirst({
       where: {
         slug: finalSlug,
-        id: { not: parseInt(resolvedParams.id) }
+        id: { not: parseInt(id) }
       }
     })
 
@@ -71,7 +72,7 @@ export async function PUT(
     }
 
     const category = await prisma.category.update({
-      where: { id: parseInt(resolvedParams.id) },
+      where: { id: parseInt(id) },
       data: {
         name,
         description: description || null,
@@ -95,13 +96,13 @@ export async function PUT(
 // DELETE - Delete category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
-    const resolvedParams = await params;
+    const { id } = await params;
     // Check if category exists
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(resolvedParams.id) }
+      where: { id: parseInt(id) }
     })
 
     if (!category) {
@@ -113,7 +114,7 @@ export async function DELETE(
 
     // Check if category has products
     const productCount = await prisma.product.count({
-      where: { categoryId: parseInt(resolvedParams.id) }
+      where: { categoryId: parseInt(id) }
     })
 
     if (productCount > 0) {
@@ -125,7 +126,7 @@ export async function DELETE(
 
     // Delete category
     await prisma.category.delete({
-      where: { id: parseInt(resolvedParams.id) }
+      where: { id: parseInt(id) }
     })
 
     return NextResponse.json({ success: true })

@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { RouteCtx } from '@/lib/route-types'
 
 // GET - Get single review
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     const review = await prisma.review.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         product: {
           select: {
@@ -48,9 +50,10 @@ export async function GET(
 // PUT - Update review
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
-  try {
+ try {
+    const { id } = await params;
     const body = await request.json()
     const { customerId, productId, rating, title, content, sortOrder, isVisible } = body
 
@@ -64,7 +67,7 @@ export async function PUT(
 
     // Check if review exists
     const existingReview = await prisma.review.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     })
 
     if (!existingReview) {
@@ -103,7 +106,7 @@ export async function PUT(
       where: {
         customerId: parseInt(customerId),
         productId: parseInt(productId),
-        id: { not: parseInt(params.id) }
+        id: { not: parseInt(id) }
       }
     })
 
@@ -115,7 +118,7 @@ export async function PUT(
     }
 
     const review = await prisma.review.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         customerId: parseInt(customerId),
         productId: parseInt(productId),
@@ -141,12 +144,13 @@ export async function PUT(
 // DELETE - Delete review
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteCtx<{ id: string }>
 ) {
   try {
+    const { id } = await params;
     // Check if review exists
     const review = await prisma.review.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     })
 
     if (!review) {
@@ -158,7 +162,7 @@ export async function DELETE(
 
     // Delete review
     await prisma.review.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     })
 
     return NextResponse.json({ success: true })
