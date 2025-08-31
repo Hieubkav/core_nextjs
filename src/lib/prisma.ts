@@ -120,37 +120,3 @@ export const PrismaHelper = {
   }
 }
 
-// Graceful shutdown chỉ chạy trên server side và không phải trong Edge Runtime
-const isEdgeRuntime = typeof process !== 'undefined' && process.env?.NEXT_RUNTIME === 'edge';
-if (typeof window === 'undefined' && typeof process !== 'undefined' && process.on && !isEdgeRuntime) {
-  const gracefulShutdown = async (signal: string) => {
-    console.log(`\n🔄 Received ${signal}. Gracefully shutting down...`)
-    try {
-      await prisma.$disconnect()
-      globalThis.__prismaConnected = false
-      console.log('✅ Prisma disconnected successfully')
-    } catch (error) {
-      console.error('❌ Error during Prisma disconnect:', error)
-    } finally {
-      process.exit(0)
-    }
-  }
-
-  // Bảo vệ thêm với try-catch
-  try {
-    process.on('beforeExit', async () => {
-      if (globalThis.__prismaConnected) {
-        await prisma.$disconnect()
-        globalThis.__prismaConnected = false
-      }
-    })
-    
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'))
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
-    process.on('SIGUSR2', () => gracefulShutdown('SIGUSR2'))
-    
-    console.log('🛡️ Process handlers registered successfully')
-  } catch (error) {
-    console.warn('⚠️ Could not register process handlers:', error)
-  }
-}
