@@ -1,11 +1,18 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
+
+interface RouteParams {
+  id: string;
+}
+
+interface RouteContext {
+  params: RouteParams;
+}
 import { prisma } from '@/lib/prisma'
 
 // GET - Get single category
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
     const category = await prisma.category.findUnique({
@@ -33,7 +40,7 @@ export async function GET(
 // PUT - Update category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
     const body = await request.json()
@@ -94,7 +101,7 @@ export async function PUT(
 // DELETE - Delete category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
     // Check if category exists
