@@ -1,10 +1,9 @@
 {
   "buildCommand": "npm run build:vercel",
   "functions": {
-    "api/**": {
+    "src/app/api/**": {
       "memory": 1024,
       "maxDuration": 30
     }
   }
 }
-
