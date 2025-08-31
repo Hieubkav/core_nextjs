@@ -8,7 +8,6 @@ declare global {
 
 // Kiểm tra runtime environment
 const isServerSide = typeof window === 'undefined'
-const hasProcess = typeof process !== 'undefined'
 
 // Tạo function để init Prisma với config tối ưu
 function createPrismaClient() {
@@ -17,17 +16,31 @@ function createPrismaClient() {
   }
 
   try {
+    // Build a safe connection string that preserves existing query params
+    const rawUrl = process.env.DATABASE_URL || ''
+    let tunedUrl = rawUrl
+    try {
+      const u = new URL(rawUrl)
+      u.searchParams.set('prepared_statements', 'false')
+      u.searchParams.set('pgbouncer', 'true')
+      u.searchParams.set('connection_limit', '1')
+      u.searchParams.set('pool_timeout', '0')
+      tunedUrl = u.toString()
+    } catch {
+      tunedUrl = rawUrl + (rawUrl.includes('?') ? '&' : '?') + 'prepared_statements=false&pgbouncer=true&connection_limit=1&pool_timeout=0'
+    }
+
     return new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
       datasources: {
         db: {
           // Sử dụng session mode để tránh prepared statement issues
-          url: process.env.DATABASE_URL + '?prepared_statements=false&pgbouncer=true&connection_limit=1&pool_timeout=0'
+          url: tunedUrl
         }
       }
     })
   } catch (error) {
-    console.error('❌ Failed to create Prisma client:', error)
+    console.error('Failed to create Prisma client:', error)
     throw error
   }
 }
@@ -69,9 +82,9 @@ export const PrismaHelper = {
       try {
         await prismaClient.$connect()
         globalThis.__prismaConnected = true
-        console.log('✅ Prisma connected successfully')
+        console.log('Prisma connected successfully')
       } catch (error) {
-        console.error('❌ Prisma connection failed:', error)
+        console.error('Prisma connection failed:', error)
         globalThis.__prismaConnected = false
         throw error
       }
@@ -92,9 +105,9 @@ export const PrismaHelper = {
       // Delay để đảm bảo disconnect hoàn toàn
       await new Promise(resolve => setTimeout(resolve, 500))
       await this.ensureConnection()
-      console.log('✅ Force reconnect successful')
+      console.log('Force reconnect successful')
     } catch (error) {
-      console.error('❌ Force reconnect failed:', error)
+      console.error('Force reconnect failed:', error)
       throw error
     }
   },
@@ -111,31 +124,30 @@ export const PrismaHelper = {
       const startTime = Date.now()
       await prismaClient.$queryRaw`SELECT 1 as health_check`
       const responseTime = Date.now() - startTime
-      console.log(`✅ Database health check OK (${responseTime}ms)`)
+      console.log(`Database health check OK (${responseTime}ms)`) 
       return { healthy: true, responseTime }
     } catch (error) {
-      console.error('❌ Database health check failed:', error)
+      console.error('Database health check failed:', error)
       return { healthy: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
   }
 }
 
 // Graceful shutdown chỉ chạy trên server side
-if (typeof window === 'undefined' && typeof process !== 'undefined' && process.on) {
+if (typeof window === 'undefined' && typeof process !== 'undefined' && (process as any).on) {
   const gracefulShutdown = async (signal: string) => {
-    console.log(`\n🔄 Received ${signal}. Gracefully shutting down...`)
+    console.log(`\nReceived ${signal}. Gracefully shutting down...`)
     try {
       await prisma.$disconnect()
       globalThis.__prismaConnected = false
-      console.log('✅ Prisma disconnected successfully')
+      console.log('Prisma disconnected successfully')
     } catch (error) {
-      console.error('❌ Error during Prisma disconnect:', error)
+      console.error('Error during Prisma disconnect:', error)
     } finally {
       process.exit(0)
     }
   }
 
-  // Bảo vệ thêm với try-catch
   try {
     process.on('beforeExit', async () => {
       if (globalThis.__prismaConnected) {
@@ -147,9 +159,8 @@ if (typeof window === 'undefined' && typeof process !== 'undefined' && process.o
     process.on('SIGINT', () => gracefulShutdown('SIGINT'))
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
     process.on('SIGUSR2', () => gracefulShutdown('SIGUSR2'))
-    
-    console.log('🛡️ Process handlers registered successfully')
   } catch (error) {
-    console.warn('⚠️ Could not register process handlers:', error)
+    console.warn('Could not register process handlers:', error)
   }
 }
+

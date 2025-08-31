@@ -1,4 +1,5 @@
 import React from 'react';
+import { getBaseUrl } from '@/lib/url';
 import Header from '@/components/home/Header';
 import Slider from '@/components/home/Slider';
 import CatalogAll from '@/components/home/CatalogAll';
@@ -101,32 +102,33 @@ interface SettingsFromAPI {
 
 async function fetchHomeData() {
   try {
-    const slidersRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/sliders?limit=5`);
+    const baseUrl = getBaseUrl();
+    const slidersRes = await fetch(`${baseUrl}/api/home/sliders?limit=5`);
     const sliders: SliderFromAPI[] = await slidersRes.json();
 
-    const categoriesRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/categories?limit=8`);
+    const categoriesRes = await fetch(`${baseUrl}/api/home/categories?limit=8`);
     const categories: CategoryFromAPI[] = await categoriesRes.json();
 
     const featuredProductsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/home/products?limit=8&sortBy=sortOrder&sortOrder=asc`
+      `${baseUrl}/api/home/products?limit=8&sortBy=sortOrder&sortOrder=asc`
     );
     const featuredProducts: ProductFromAPI[] = await featuredProductsRes.json();
 
-    const latestProductsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/latest-products?limit=8`);
+    const latestProductsRes = await fetch(`${baseUrl}/api/home/latest-products?limit=8`);
     const latestProducts: ProductFromAPI[] = await latestProductsRes.json();
 
-    const reviewsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/reviews?limit=6`);
+    const reviewsRes = await fetch(`${baseUrl}/api/home/reviews?limit=6`);
     const reviews: ReviewFromAPI[] = await reviewsRes.json();
 
     const postsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/home/posts?limit=3&sortBy=createdAt&sortOrder=desc`
+      `${baseUrl}/api/home/posts?limit=3&sortBy=createdAt&sortOrder=desc`
     );
     const posts: PostFromAPI[] = await postsRes.json();
 
-    const faqsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/faqs?limit=10`);
+    const faqsRes = await fetch(`${baseUrl}/api/home/faqs?limit=10`);
     const faqs: FaqFromAPI[] = await faqsRes.json();
 
-    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/settings`);
+    const settingsRes = await fetch(`${baseUrl}/api/home/settings`);
     const settings: SettingsFromAPI = await settingsRes.json();
 
     return { sliders, categories, featuredProducts, latestProducts, reviews, posts, faqs, settings };

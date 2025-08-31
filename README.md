@@ -31,6 +31,28 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1) Prepare environment variables in Vercel (Project → Settings → Environment Variables). See `.env.example` for the full list. Required:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `DATABASE_URL`, `DIRECT_URL` (Postgres, enable SSL; pooling on `DATABASE_URL`)
+- `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `ADMIN_EMAIL`
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_NAME`, `MAIL_FROM_ADDRESS`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `APP_URL`, `NEXT_PUBLIC_BASE_URL`
+
+2) First-time database setup (one-time):
+
+- This repo includes Prisma migrations at `prisma/migrations`. To apply them to your production DB: `npx prisma migrate deploy`.
+- Optionally seed sample data: `npm run seed`.
+
+3) Build configuration:
+
+- `vercel.json` sets the build command to `npm run build:vercel` which runs: `prisma generate && prisma migrate deploy && next build`.
+
+4) Deploy
+
+- Using Vercel CLI: `vercel`, then `vercel --prod`.
+
+Notes:
+
+- Prisma Client output is generated to `src/generated/prisma` via `prisma/schema.prisma` generator config.
+- Image upload uses Supabase Storage; Next Image remote patterns are configured in `next.config.js`.
