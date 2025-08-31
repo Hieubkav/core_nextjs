@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-interface RouteParams {
-  id: string;
-}
-
-interface RouteContext {
-  params: RouteParams;
-}
 import { prisma } from '@/lib/prisma'
 
 // GET - Get single category
 export async function GET(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
@@ -41,7 +33,7 @@ export async function GET(
 // PUT - Update category
 export async function PUT(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
@@ -103,7 +95,7 @@ export async function PUT(
 // DELETE - Delete category
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
