@@ -9,7 +9,7 @@ const Footer: React.FC<FooterProps> = ({ settings = {} }) => {
   const siteName = settings.site_name || 'ACCSTORE';
   const siteDescription =
     settings.site_description ||
-    'Cung cấp các tài khoản game chất lượng cao với giá cả cạnh tranh nhất thị trường.';
+    'Cung cấp các tài khoản game chất lượng cao với giá cả cạnh tranh.';
   const contactAddress = settings.address || '123 Đường ABC, Quận XYZ, TP. HCM';
   const contactPhone = settings.contact_phone || '(+84) 123 456 789';
   const contactEmail = settings.contact_email || 'info@accstore.com';
@@ -20,7 +20,7 @@ const Footer: React.FC<FooterProps> = ({ settings = {} }) => {
   return (
     <footer className="bg-gradient-to-b from-[#0b1220] to-[#0e1a2e] text-light py-12">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Logo & mô tả */}
           <div>
             <h2 className="text-2xl font-bold mb-4">
@@ -77,16 +77,6 @@ const Footer: React.FC<FooterProps> = ({ settings = {} }) => {
                 <span>{contactEmail}</span>
               </li>
             </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Bản tin</h3>
-            <p className="text-gray-300 mb-4">Đăng ký để nhận thông tin khuyến mãi và tin tức mới nhất.</p>
-            <form className="flex flex-col space-y-2">
-              <input type="email" placeholder="Email của bạn" className="input bg-light text-dark" />
-              <button type="submit" className="btn">Đăng ký</button>
-            </form>
           </div>
         </div>
 

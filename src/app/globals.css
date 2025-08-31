@@ -245,3 +245,14 @@ body {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* Blog modal content typography */
+.blog-modal-content {
+  line-height: 1.7;
+}
+.blog-modal-content p { margin: 0 0 1rem; }
+.blog-modal-content h1 { font-size: 1.5rem; line-height: 2rem; font-weight: 700; margin: 0 0 0.75rem; }
+.blog-modal-content h2 { font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+.blog-modal-content h3 { font-size: 1.125rem; line-height: 1.5rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+.blog-modal-content ul, .blog-modal-content ol { margin: 0.75rem 0 1rem 1.25rem; }
+.blog-modal-content img { display: block; max-width: 100%; height: auto; border-radius: 12px; margin: 0.75rem 0; object-fit: contain; }

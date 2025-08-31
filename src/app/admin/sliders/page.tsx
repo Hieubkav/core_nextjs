@@ -138,6 +138,22 @@ export default function AdminSliders() {
             Thêm slider
           </button>
         </div>
+
+        {/* Helper: Hướng dẫn ảnh hero */}
+        <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          <div className="flex items-start gap-3">
+            <PhotoIcon className="h-5 w-5 mt-0.5 text-blue-600" />
+            <div>
+              <p className="font-medium">Gợi ý ảnh hero (slider) tối ưu cho responsive</p>
+              <ul className="list-disc pl-5 mt-1 space-y-1">
+                <li>Kích thước khuyến nghị: <b>1920x1080</b> (16:9) hoặc <b>1920x960</b> (~2:1). Màn hình lớn có thể dùng <b>2560x1440</b>/<b>2400x1000</b> nếu ảnh đã nén tốt.</li>
+                <li>Định dạng ưu tiên: <b>WebP/AVIF</b> (nhẹ), dung lượng nên <b>&lt; 500KB</b>.</li>
+                <li>Thiết kế an toàn: giữ nội dung quan trọng trong <b>vùng giữa 60%</b> (hai bên sẽ dễ bị crop khi dùng cover).</li>
+                <li>Không nhúng chữ vào ảnh; sử dụng tiêu đề/nút của hệ thống để đảm bảo rõ nét.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filters */}
