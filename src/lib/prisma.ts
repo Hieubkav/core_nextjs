@@ -120,8 +120,9 @@ export const PrismaHelper = {
   }
 }
 
-// Graceful shutdown chỉ chạy trên server side
-if (typeof window === 'undefined' && typeof process !== 'undefined' && process.on) {
+// Graceful shutdown chỉ chạy trên server side và không phải trong Edge Runtime
+const isEdgeRuntime = typeof process !== 'undefined' && process.versions?.hasOwnProperty('edge-runtime');
+if (typeof window === 'undefined' && typeof process !== 'undefined' && process.on && !isEdgeRuntime) {
   const gracefulShutdown = async (signal: string) => {
     console.log(`\n🔄 Received ${signal}. Gracefully shutting down...`)
     try {
