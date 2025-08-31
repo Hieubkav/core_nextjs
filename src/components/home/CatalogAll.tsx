@@ -155,7 +155,7 @@ const CatalogAll: React.FC<CatalogAllProps> = ({ settings = {} }) => {
   };
 
   return (
-    <section className="py-12 section-blue">
+    <section className="py-12">
       <div className="mx-auto max-w-screen-2xl px-4 md:px-6">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-dark">Tất cả sản phẩm</h2>
 

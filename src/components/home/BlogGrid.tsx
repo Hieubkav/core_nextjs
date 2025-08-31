@@ -112,7 +112,7 @@ const BlogGrid: React.FC<BlogGridProps> = ({ posts, title = 'Tin tức & Bài vi
   const goToNext = () => goToSlide(currentIndex === mappedPosts.length - 1 ? 0 : currentIndex + 1);
 
   return (
-    <section className="py-12 section-blue">
+    <section className="py-12">
       <div className="container mx-auto px-4">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-dark">{title}</h2>
 
