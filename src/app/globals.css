@@ -2,19 +2,23 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  /* Design System Colors */
-  --primary: #2196F3;
-  --secondary: #F5F5F5;
-  --success: #4CAF50;
-  --warning: #FFCDD2;
-  --danger: #B71C1C;
-  --info: #9E9E9E;
+  --foreground: #111827; /* gray-900 */
+  /* Design System Colors (Tailwind-aligned) */
+  --primary: #2563EB;       /* blue-600 */
+  --secondary: #F8FAFC;     /* slate-50 */
+  --success: #10B981;       /* emerald-500 */
+  --warning: #F59E0B;       /* amber-500 */
+  --danger: #EF4444;        /* red-500 */
+  --info: #6B7280;          /* gray-500 */
   --light: #FFFFFF;
-  --dark: #212121;
-  --gray-light: #E0E0E0;
-  --gray-medium: #757575;
-  --gray-dark: #424242;
+  --dark: #111827;          /* gray-900 */
+  --gray-light: #E5E7EB;    /* gray-200 */
+  --gray-medium: #6B7280;   /* gray-500 */
+  --gray-dark: #374151;     /* gray-700 */
+
+  /* Soft blue page background gradient */
+  --bg-start: #EFF6FF;      /* blue-50 */
+  --bg-end: #FFFFFF;
 }
 
 @theme inline {
@@ -32,9 +36,24 @@
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  /* Layered white/blue watercolor-like gradient to unify sections */
+  background-image:
+    radial-gradient(1000px 300px at -10% 5%, rgba(37, 99, 235, 0.06), transparent 60%),
+    radial-gradient(800px 260px at 110% 15%, rgba(59, 130, 246, 0.06), transparent 60%),
+    radial-gradient(700px 240px at 50% 115%, rgba(33, 150, 243, 0.05), transparent 60%),
+    linear-gradient(to bottom, var(--bg-start), var(--bg-end));
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Section-level soft blue loang background */
+.section-blue {
+  background-image:
+    radial-gradient(900px 260px at 10% -10%, rgba(37,99,235,0.18), transparent 60%),
+    radial-gradient(800px 240px at 90% 0%, rgba(59,130,246,0.14), transparent 60%),
+    radial-gradient(700px 200px at 50% 115%, rgba(33,150,243,0.08), transparent 60%);
 }
 
 /* Design System Components */
@@ -61,6 +80,10 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Brand button variants */
+.btn.brand-zalo { background-color: #0068FF; }
+.btn.brand-facebook { background-color: #1877F2; }
 
 /* Chip */
 .chip {
@@ -90,9 +113,10 @@ body {
 .card {
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   background-color: var(--light);
-  margin: 16px;
+  border: 1px solid var(--gray-light);
+  margin: 0; /* Let grid gaps control spacing */
 }
 
 /* Input */
@@ -171,6 +195,11 @@ body {
 
 .bg-secondary {
   background-color: var(--secondary);
+}
+
+/* Subtle text shadow utility for hero/slider text */
+.text-shadow {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 /* Line clamp utilities */

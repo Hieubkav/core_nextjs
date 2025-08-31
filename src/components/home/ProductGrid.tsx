@@ -1,9 +1,7 @@
-'use client';
+"use client";
 
 import React from 'react';
-import Link from 'next/link';
 
-// Interface cho dữ liệu từ API
 interface ProductFromAPI {
   id: number;
   name: string;
@@ -17,165 +15,131 @@ interface ProductFromAPI {
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  } | null;
+  category: { id: number; name: string; slug: string } | null;
   price: number;
   originalPrice: number | null;
   imageUrl: string | null;
   rating: number;
   reviewCount: number;
-}
-
-// Interface cho component (chỉ lấy các thuộc tính cần thiết)
-interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  price: number;
-  originalPrice?: number;
-  imageUrl?: string;
-  rating?: number;
-  reviewCount?: number;
+  variantOptions?: { name?: string; price: number; originalPrice?: number }[];
 }
 
 interface ProductGridProps {
- products: ProductFromAPI[];
+  products: ProductFromAPI[];
   title?: string;
-  showAddToCart?: boolean;
+  settings?: Record<string, string>;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ 
-  products, 
-  title = "Sản phẩm", 
-  showAddToCart = true 
-}) => {
-  // Hàm render rating stars
-  const renderRating = (rating: number, reviewCount: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <svg key={`full-${i}`} xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.18l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      );
-    }
-    
-    if (hasHalfStar) {
-      stars.push(
-        <svg key="half" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      );
-    }
-    
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <svg key={`empty-${i}`} xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-light" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      );
-    }
-    
-    return (
-      <div className="flex items-center">
-        <div className="flex mr-1">
-          {stars}
-        </div>
-        <span className="text-gray-medium text-sm">
-          ({reviewCount})
-        </span>
-      </div>
-    );
-  };
+const ProductGrid: React.FC<ProductGridProps> = ({ products, title = 'Sản phẩm', settings = {} }) => {
+  const [open, setOpen] = React.useState<ProductFromAPI | null>(null);
+  const [variantIndex, setVariantIndex] = React.useState(0);
 
-  // Map dữ liệu từ API sang dữ liệu cho component
-  const mappedProducts: Product[] = products.map(product => ({
-    id: product.id,
-    name: product.name,
-    slug: product.slug,
-    price: product.price,
-    originalPrice: product.originalPrice || undefined,
-    imageUrl: product.imageUrl || undefined,
-    rating: product.rating,
-    reviewCount: product.reviewCount
-  }));
+  const openModal = (p: ProductFromAPI) => { setOpen(p); setVariantIndex(0); };
+  const closeModal = () => setOpen(null);
+
+  const fbUrl = (settings.facebook_url || settings.facebook || '').toString();
+  const zaloPhone = (settings.zalo_phone || settings.contact_phone || '').toString().replace(/[^+\d]/g, '');
 
   return (
-    <section className="py-12">
-      <div className="container mx-auto px-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-dark">
-          {title}
-        </h2>
-        
-        {mappedProducts && mappedProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {mappedProducts.map((product) => (
+    <section className="py-12 section-blue">
+      <div className="mx-auto max-w-screen-2xl px-4 md:px-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-dark">{title}</h2>
+
+        {products && products.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 md:gap-6">
+            {products.map((product) => (
               <div key={product.id} className="card hover:shadow-lg transition-shadow duration-300">
-                <Link href={`/products/${product.slug}`}>
-                  {/* Hình ảnh sản phẩm */}
+                <div className="cursor-pointer select-none" onClick={() => openModal(product)}>
                   <div className="aspect-w-1 aspect-h-1 mb-4">
-                    <div 
+                    <div
                       className="w-full h-48 bg-cover bg-center rounded-lg overflow-hidden"
-                      style={{ 
-                        backgroundImage: product.imageUrl 
-                          ? `url(${product.imageUrl})` 
-                          : 'linear-gradient(45deg, #2196F3, #21CBF3)'
-                      }}
+                      style={{ backgroundImage: product.imageUrl ? `url(${product.imageUrl})` : 'linear-gradient(45deg,#2196F3,#21CBF3)' }}
                     >
-                      <div className="w-full h-full bg-gradient-to-b from-transparent to-black opacity-10 hover:opacity-20 transition-opacity"></div>
+                      <div className="w-full h-full bg-gradient-to-b from-transparent to-black opacity-10 hover:opacity-20 transition-opacity" />
                     </div>
                   </div>
-                  
-                  {/* Thông tin sản phẩm */}
-                  <h3 className="text-lg font-semibold text-dark mb-2 line-clamp-1">
-                    {product.name}
-                  </h3>
-                  
-                  {/* Giá sản phẩm */}
+                  <h3 className="text-lg font-semibold text-dark mb-1 line-clamp-1">{product.name}</h3>
+                  {(product.shortDesc || product.description) && (
+                    <p className="text-gray-medium text-sm line-clamp-2 mb-2">{product.shortDesc || product.description}</p>
+                  )}
                   <div className="mb-3">
-                    {product.originalPrice && product.originalPrice > product.price ? (
+                    {product.variantOptions && product.variantOptions.length > 1 ? (
+                      <span className="text-primary font-bold text-lg">
+                        Giá từ {(product.variantOptions.map(v => Number(v.price)).reduce((m, p) => Math.min(m, isNaN(p) ? m : p), Number.MAX_SAFE_INTEGER) || 0).toLocaleString('vi-VN')} ₫
+                      </span>
+                    ) : product.originalPrice && product.originalPrice > product.price ? (
                       <div className="flex items-center">
-                        <span className="text-primary font-bold text-lg">
-                          {product.price.toLocaleString('vi-VN')}₫
-                        </span>
-                        <span className="text-gray-medium text-sm line-through ml-2">
-                          {product.originalPrice.toLocaleString('vi-VN')}₫
-                        </span>
+                        <span className="text-primary font-bold text-lg">{product.price.toLocaleString('vi-VN')} ₫</span>
+                        <span className="text-gray-medium text-sm line-through ml-2">{product.originalPrice.toLocaleString('vi-VN')} ₫</span>
                       </div>
                     ) : (
-                      <span className="text-primary font-bold text-lg">
-                        {product.price.toLocaleString('vi-VN')}₫
-                      </span>
+                      <span className="text-primary font-bold text-lg">{product.price.toLocaleString('vi-VN')} ₫</span>
                     )}
                   </div>
-                  
-                  {/* Rating */}
-                  {product.rating !== undefined && product.reviewCount !== undefined && (
-                    <div className="mb-4">
-                      {renderRating(product.rating, product.reviewCount)}
-                    </div>
-                  )}
-                </Link>
-                
-                {/* Nút thêm vào giỏ hàng */}
-                {showAddToCart && (
-                  <button className="btn w-full py-2 text-sm">
-                    Thêm vào giỏ hàng
-                  </button>
-                )}
+                </div>
+                <button className="btn w-full py-2 text-sm" onClick={() => openModal(product)}>Xem chi tiết</button>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-medium">Không có sản phẩm nào</p>
+          <div className="text-center py-12"><p className="text-gray-medium">Không có sản phẩm nào</p></div>
+        )}
+
+        {open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeModal}>
+            <div className="bg-white max-w-xl w-full rounded-lg shadow-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-dark line-clamp-1">{open.name}</h3>
+                <button aria-label="Đóng" className="text-dark" onClick={closeModal}>×</button>
+              </div>
+              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="w-full h-52 bg-cover bg-center rounded" style={{ backgroundImage: open.imageUrl ? `url(${open.imageUrl})` : 'linear-gradient(45deg,#2196F3,#21CBF3)' }} />
+                </div>
+                <div>
+                  {open.shortDesc && (
+                    <p className="text-sm text-gray-medium mb-3">{open.shortDesc}</p>
+                  )}
+                  {open.description && (
+                    <div className="text-sm text-dark whitespace-pre-line mb-3">{open.description}</div>
+                  )}
+                  {open.variantOptions && open.variantOptions.length > 0 && (
+                    <div className="mb-3">
+                      <label className="block text-sm text-dark mb-1">Phiên bản/biến thể</label>
+                      <select className="input" value={variantIndex} onChange={(e) => setVariantIndex(parseInt(e.target.value))}>
+                        {open.variantOptions.map((v, idx) => (
+                          <option key={idx} value={idx}>{v.name || `Gói ${idx + 1}`} - {v.price.toLocaleString('vi-VN')} ₫</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="mb-3">
+                    {(() => {
+                      const v = open.variantOptions && open.variantOptions[variantIndex];
+                      const price = v ? v.price : open.price;
+                      const original = v && v.originalPrice ? v.originalPrice : open.originalPrice || undefined;
+                      return original && original > price ? (
+                        <div className="flex items-center">
+                          <span className="text-primary font-bold text-lg">{price.toLocaleString('vi-VN')} ₫</span>
+                          <span className="text-gray-medium text-sm line-through ml-2">{original.toLocaleString('vi-VN')} ₫</span>
+                        </div>
+                      ) : (
+                        <span className="text-primary font-bold text-lg">{price.toLocaleString('vi-VN')} ₫</span>
+                      );
+                    })()}
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                    {zaloPhone && (
+                      <a href={`https://zalo.me/${zaloPhone}`} target="_blank" rel="noopener noreferrer" className="btn brand-zalo text-base py-3 px-4 w-full sm:w-auto">Mua qua Zalo</a>
+                    )}
+                    {fbUrl && fbUrl !== '#' && (
+                      <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="btn brand-facebook text-base py-3 px-4 w-full sm:w-auto">Mua qua Facebook</a>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t text-right"><button className="btn" onClick={closeModal}>Đóng</button></div>
+            </div>
           </div>
         )}
       </div>
