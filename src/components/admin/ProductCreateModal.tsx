@@ -24,11 +24,10 @@ interface ProductVariant {
   description?: string
   price: number
   originalPrice?: number
-  stock?: number
   isDefault: boolean
   isVisible: boolean
   sortOrder: number
- // Thêm fields cho validation
+  // Thêm fields cho validation
   priceInput?: string
   priceValid?: boolean
   priceError?: string
@@ -243,9 +242,9 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
     }
     
     // Cập nhật trạng thái validation
-    variant[`${field}Input` as keyof ProductVariant] = value as never
-    variant[`${field}Valid` as keyof ProductVariant] = validation.isValid as never
-    variant[`${field}Error` as keyof ProductVariant] = (validation.error || '') as never
+    variant[`${field}Input` as keyof ProductVariant] = value
+    variant[`${field}Valid` as keyof ProductVariant] = validation.isValid
+    variant[`${field}Error` as keyof ProductVariant] = validation.error || ''
     
     newVariants[index] = variant
     setVariants(newVariants)
@@ -403,7 +402,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
       shortDesc: '',
       categoryId: '',
       isVisible: true,
-      status: 'active',
+      isPublished: false,
       sortOrder: 0
     })
     setVariants([
@@ -412,7 +411,6 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
         description: '',
         price: 0,
         originalPrice: 0,
-        stock: 0,
         isDefault: true,
         isVisible: true,
         sortOrder: 0,
@@ -597,7 +595,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
                 <button
                   type="button"
                   onClick={addVariant}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-10 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <PlusIcon className="h-4 w-4 mr-1" />
                   Thêm variant
@@ -735,7 +733,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
                           onChange={(e) => updateVariant(index, 'isDefault', e.target.checked)}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
-                        <span className="ml-2 text-sm text-gray-70">Mặc định</span>
+                        <span className="ml-2 text-sm text-gray-700">Mặc định</span>
                       </label>
 
                       <label className="flex items-center">
@@ -806,7 +804,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
                         key={image.id}
                         onClick={() => handleImageSelect(image.id)}
                         className={`relative cursor-pointer group ${
-                          selectedImageIds.includes(image.id) ? 'ring-2 ring-blue-50' : ''
+                          selectedImageIds.includes(image.id) ? 'ring-2 ring-blue-500' : ''
                         }`}
                       >
                         <Image
