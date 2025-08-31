@@ -15,8 +15,9 @@ export async function GET(
   { params }: RouteContext
 ) {
   try {
+    const resolvedParams = await params;
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(resolvedParams.id) }
     })
 
     if (!category) {
@@ -43,6 +44,7 @@ export async function PUT(
   { params }: RouteContext
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json()
     const { name, description, slug, sortOrder, isVisible } = body
 
@@ -65,7 +67,7 @@ export async function PUT(
     const existingCategory = await prisma.category.findFirst({
       where: {
         slug: finalSlug,
-        id: { not: parseInt(params.id) }
+        id: { not: parseInt(resolvedParams.id) }
       }
     })
 
@@ -77,7 +79,7 @@ export async function PUT(
     }
 
     const category = await prisma.category.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(resolvedParams.id) },
       data: {
         name,
         description: description || null,
@@ -104,9 +106,10 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
+    const resolvedParams = await params;
     // Check if category exists
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(resolvedParams.id) }
     })
 
     if (!category) {
@@ -118,7 +121,7 @@ export async function DELETE(
 
     // Check if category has products
     const productCount = await prisma.product.count({
-      where: { categoryId: parseInt(params.id) }
+      where: { categoryId: parseInt(resolvedParams.id) }
     })
 
     if (productCount > 0) {
@@ -130,7 +133,7 @@ export async function DELETE(
 
     // Delete category
     await prisma.category.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(resolvedParams.id) }
     })
 
     return NextResponse.json({ success: true })
