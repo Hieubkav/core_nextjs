@@ -1,103 +1,221 @@
-import Image from "next/image";
+import React from 'react';
+import Header from '@/components/home/Header';
+import Slider from '@/components/home/Slider';
+import CategoryGrid from '@/components/home/CategoryGrid';
+import ProductGrid from '@/components/home/ProductGrid';
+import LatestProductGrid from '@/components/home/LatestProductGrid';
+import TestimonialCarousel from '@/components/home/TestimonialCarousel';
+import BlogGrid from '@/components/home/BlogGrid';
+import FAQAccordion from '@/components/home/FAQAccordion';
+import Footer from '@/components/home/Footer';
 
-export default function Home() {
+// Interface cho dữ liệu từ API
+interface SliderFromAPI {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  content: string | null;
+  buttonText: string | null;
+  buttonLink: string | null;
+  sortOrder: number;
+ isVisible: boolean;
+ createdAt: string;
+ updatedAt: string;
+  imageUrl: string | null;
+}
+
+interface CategoryFromAPI {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  sortOrder: number;
+  isVisible: boolean;
+  createdAt: string;
+  updatedAt: string;
+  productCount: number;
+}
+
+interface ProductFromAPI {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  shortDesc: string | null;
+  features: string[] | null;
+  categoryId: number;
+  sortOrder: number;
+  isVisible: boolean;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  price: number;
+  originalPrice: number | null;
+  imageUrl: string | null;
+  rating: number;
+  reviewCount: number;
+}
+
+interface ReviewFromAPI {
+  id: number;
+  customerId: number;
+  productId: number;
+ rating: number;
+ title: string | null;
+  content: string | null;
+  isVisible: boolean;
+  sortOrder: number;
+ createdAt: string;
+  updatedAt: string;
+  customerName: string;
+  productName: string;
+  productSlug: string;
+}
+
+interface PostFromAPI {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  status: string;
+  sortOrder: number;
+  isVisible: boolean;
+  createdAt: string;
+  updatedAt: string;
+  thumbnailUrl: string | null;
+}
+
+interface FaqFromAPI {
+  id: number;
+  question: string;
+  answer: string;
+ sortOrder: number;
+ isVisible: boolean;
+ createdAt: string;
+  updatedAt: string;
+}
+
+interface SettingsFromAPI {
+  [key: string]: string;
+}
+
+// Hàm fetch dữ liệu từ API routes
+async function fetchHomeData() {
+  try {
+    // Fetch sliders
+    const slidersRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/sliders?limit=5`);
+    const sliders: SliderFromAPI[] = await slidersRes.json();
+    
+    // Fetch categories
+    const categoriesRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/categories?limit=8`);
+    const categories: CategoryFromAPI[] = await categoriesRes.json();
+    
+    // Fetch featured products
+    const featuredProductsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/products?limit=8&sortBy=sortOrder&sortOrder=asc`);
+    const featuredProducts: ProductFromAPI[] = await featuredProductsRes.json();
+    
+    // Fetch latest products
+    const latestProductsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/latest-products?limit=8`);
+    const latestProducts: ProductFromAPI[] = await latestProductsRes.json();
+    
+    // Fetch testimonials/reviews
+    const reviewsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/reviews?limit=6`);
+    const reviews: ReviewFromAPI[] = await reviewsRes.json();
+    
+    // Fetch blog posts
+    const postsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/posts?limit=3&sortBy=createdAt&sortOrder=desc`);
+    const posts: PostFromAPI[] = await postsRes.json();
+    
+    // Fetch FAQs
+    const faqsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/faqs?limit=10`);
+    const faqs: FaqFromAPI[] = await faqsRes.json();
+    
+    // Fetch settings
+    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home/settings`);
+    const settings: SettingsFromAPI = await settingsRes.json();
+    
+    return {
+      sliders,
+      categories,
+      featuredProducts,
+      latestProducts,
+      reviews,
+      posts,
+      faqs,
+      settings
+    };
+  } catch (error) {
+    console.error('Error fetching home data:', error);
+    // Trả về dữ liệu mặc định nếu có lỗi
+    return {
+      sliders: [],
+      categories: [],
+      featuredProducts: [],
+      latestProducts: [],
+      reviews: [],
+      posts: [],
+      faqs: [],
+      settings: {}
+    };
+  }
+}
+
+export default async function Home() {
+  const {
+    sliders,
+    categories,
+    featuredProducts,
+    latestProducts,
+    reviews,
+    posts,
+    faqs,
+    settings
+  } = await fetchHomeData();
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <Header cartCount={3} isLoggedIn={true} username="John Doe" settings={settings} />
+      
+      <main className="flex-grow pt-16">
+        {/* Slider */}
+        <Slider slides={sliders} />
+        
+        {/* Danh mục game */}
+        <div id="categories">
+          <CategoryGrid categories={categories} />
         </div>
+        
+        {/* Sản phẩm nổi bật */}
+        <div id="products">
+          <ProductGrid products={featuredProducts} title="Sản phẩm nổi bật" />
+        </div>
+        
+        {/* Sản phẩm mới nhất */}
+        <LatestProductGrid products={latestProducts} title="Sản phẩm mới nhất" />
+        
+        {/* Đánh giá khách hàng */}
+        <TestimonialCarousel testimonials={reviews} />
+        
+        {/* Blog */}
+        <div id="blog">
+          <BlogGrid posts={posts} />
+        </div>
+        
+        {/* FAQ */}
+        <FAQAccordion faqs={faqs} />
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      
+      {/* Footer */}
+      <div id="contact">
+        <Footer settings={settings} />
+      </div>
     </div>
   );
 }
