@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { DatabaseHelper } from '@/lib/database-helper'
-import { RouteCtx } from '@/lib/route-types'
 
 // GET - Lấy chi tiết đơn hàng theo ID
 export async function GET(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params
 
     // Lấy chi tiết đơn hàng cùng với các sản phẩm trong đơn hàng
     const order = await DatabaseHelper.executeWithRetry(async () => {
@@ -68,10 +67,10 @@ export async function GET(
 // PUT - Cập nhật đơn hàng (chủ yếu là cập nhật trạng thái)
 export async function PUT(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
- try {
-    const { id } = await params;
+  try {
+    const { id } = params
     const body = await request.json()
     const { status, adminNotes } = body
 
@@ -128,10 +127,10 @@ export async function PUT(
 // DELETE - Xóa đơn hàng (chỉ nên cho admin với quyền cao)
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params
 
     // Kiểm tra đơn hàng có tồn tại không
     const existingOrder = await DatabaseHelper.executeWithRetry(async () => {

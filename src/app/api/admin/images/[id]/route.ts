@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { supabaseAdmin } from '@/lib/supabase'
-import { RouteCtx } from '@/lib/route-types'
 
 // GET - Get single image
 export async function GET(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const image = await prisma.image.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(params.id) }
     })
 
     if (!image) {
@@ -35,15 +33,14 @@ export async function GET(
 // PUT - Update image metadata
 export async function PUT(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const body = await request.json()
     const { alt, title, sortOrder, isVisible } = body
 
     const image = await prisma.image.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(params.id) },
       data: {
         alt,
         title,
@@ -73,13 +70,12 @@ function extractFilePathFromUrl(url: string): string {
 // DELETE - Delete image
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     // Get image info first
     const image = await prisma.image.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(params.id) }
     })
 
     if (!image) {
@@ -104,7 +100,7 @@ export async function DELETE(
 
     // Delete from database
     await prisma.image.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(params.id) }
     })
 
     return NextResponse.json({ success: true })

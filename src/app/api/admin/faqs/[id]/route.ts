@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { RouteCtx } from '@/lib/route-types'
 
 // GET - Get single FAQ
 export async function GET(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const faq = await prisma.fAQ.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(params.id) }
     })
 
     if (!faq) {
@@ -34,10 +32,9 @@ export async function GET(
 // PUT - Update FAQ
 export async function PUT(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const body = await request.json()
     const { question, answer, sortOrder, isVisible } = body
 
@@ -50,7 +47,7 @@ export async function PUT(
     }
 
     const faq = await prisma.fAQ.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(params.id) },
       data: {
         question,
         answer,
@@ -73,13 +70,12 @@ export async function PUT(
 // DELETE - Delete FAQ
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     // Check if FAQ exists
     const faq = await prisma.fAQ.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(params.id) }
     })
 
     if (!faq) {
@@ -91,7 +87,7 @@ export async function DELETE(
 
     // Delete FAQ
     await prisma.fAQ.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(params.id) }
     })
 
     return NextResponse.json({ success: true })

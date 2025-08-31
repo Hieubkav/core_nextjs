@@ -3,21 +3,20 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DatabaseHelper } from '@/lib/database-helper'
-import { RouteCtx } from '@/lib/route-types'
 
 // GET - Lấy product theo ID
 export async function GET(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
     // Tạm thời disable auth check cho development
     // const session = await getServerSession(authOptions)
     // if (!session || session.user.role !== 'admin') {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    //   }
+    // }
 
-    const { id } = await params;
+    const { id } = params
 
     const product = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.product.findUnique({
@@ -85,7 +84,7 @@ export async function GET(
 // PUT - Cập nhật product
 export async function PUT(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
     // Tạm thời disable auth check cho development
@@ -94,7 +93,7 @@ export async function PUT(
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
-    const { id } = await params;
+    const { id } = params
     const body = await request.json()
     const { 
       name, 
@@ -287,7 +286,7 @@ export async function PUT(
 // DELETE - Xóa product
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteCtx<{ id: string }>
+  { params }: { params: { id: string } }
 ) {
   try {
     // Tạm thời disable auth check cho development
@@ -296,7 +295,7 @@ export async function DELETE(
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
-    const { id } = await params;
+    const { id } = params
 
     // Check if product exists
     const existingProduct = await DatabaseHelper.executeWithRetry(async () => {

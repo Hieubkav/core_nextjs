@@ -3,12 +3,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DatabaseHelper } from '@/lib/database-helper'
-import { RouteCtx } from '@/lib/route-types'
 
 // GET - Lấy setting theo key
 export async function GET(
   request: NextRequest,
-  { params }: RouteCtx<{ key: string }>
+  { params }: { params: { key: string } }
 ) {
   try {
     // Tạm thời disable auth check cho development
@@ -17,7 +16,7 @@ export async function GET(
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
-    const { key } = await params;
+    const { key } = params
 
     const setting = await DatabaseHelper.executeWithRetry(async () => {
       const result = await prisma.$queryRaw<any[]>`
@@ -57,7 +56,7 @@ export async function GET(
 // PUT - Cập nhật setting theo key
 export async function PUT(
   request: NextRequest,
-  { params }: RouteCtx<{ key: string }>
+  { params }: { params: { key: string } }
 ) {
   try {
     // Tạm thời disable auth check cho development
@@ -66,7 +65,7 @@ export async function PUT(
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
-    const { key } = await params;
+    const { key } = params
     const body = await request.json()
     const { value } = body
 
