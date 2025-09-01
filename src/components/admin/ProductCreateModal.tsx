@@ -242,9 +242,13 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
     }
     
     // Cập nhật trạng thái validation
-    (variant as any)[`${field}Input`] = value
-    (variant as any)[`${field}Valid`] = validation.isValid
-    (variant as any)[`${field}Error`] = validation.error || ''
+    // Update validation state with explicit keys to satisfy TS in prod builds
+    const inputKey = field === 'price' ? 'priceInput' : 'originalPriceInput'
+    const validKey = field === 'price' ? 'priceValid' : 'originalPriceValid'
+    const errorKey = field === 'price' ? 'priceError' : 'originalPriceError'
+    ;(variant as any)[inputKey] = value
+    ;(variant as any)[validKey] = validation.isValid
+    ;(variant as any)[errorKey] = validation.error || ''
     
     newVariants[index] = variant
     setVariants(newVariants)
@@ -853,3 +857,4 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
     </div>
   )
 }
+
