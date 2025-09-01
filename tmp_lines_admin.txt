@@ -1,0 +1,128 @@
+1: import { NextRequest, NextResponse } from 'next/server'
+2: import { getServerSession } from 'next-auth'
+3: import { authOptions } from '@/lib/auth'
+4: import { prisma } from '@/lib/prisma'
+5: import { DatabaseHelper } from '@/lib/database-helper'
+6: 
+7: interface Setting {
+8:   id: number
+9:   key: string
+10:   value: string
+11:   group: string
+12:   label: string
+13:   description?: string
+14:   type: string
+15:   createdAt: Date
+16:   updatedAt: Date
+17: }
+18: 
+19: // GET - Lấy tất cả settings hoặc theo group
+20: export async function GET(request: NextRequest) {
+21:   try {
+22:     // Tạm thời disable auth check cho development
+23:     // const session = await getServerSession(authOptions)
+24:     // if (!session || session.user.role !== 'admin') {
+25:     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+26:     // }
+27: 
+28:     const { searchParams } = new URL(request.url)
+29:     const group = searchParams.get('group')
+30: 
+31:     const settings = await DatabaseHelper.executeWithRetry(async () => {
+32:       if (group) {
+33:         return await prisma.$queryRaw<Setting[]>`
+34:           SELECT * FROM "Setting" 
+35:           WHERE "group" = ${group}
+36:           ORDER BY "key" ASC
+37:         `
+38:       } else {
+39:         return await prisma.$queryRaw<Setting[]>`
+40:           SELECT * FROM "Setting" 
+41:           ORDER BY "group" ASC, "key" ASC
+42:         `
+43:       }
+44:     })
+45: 
+46:     // Chuyển đổi data thành object grouped by group
+47:     const groupedSettings: Record<string, Setting[]> = {}
+48:     settings.forEach(setting => {
+49:       if (!groupedSettings[setting.group]) {
+50:         groupedSettings[setting.group] = []
+51:       }
+52:       groupedSettings[setting.group].push(setting)
+53:     })
+54: 
+55:     return NextResponse.json({ 
+56:       success: true,
+57:       data: groupedSettings,
+58:       total: settings.length
+59:     })
+60: 
+61:   } catch (error) {
+62:     console.error('Settings API GET error:', error)
+63:     return NextResponse.json(
+64:       { 
+65:         success: false,
+66:         error: 'Lỗi khi lấy dữ liệu settings',
+67:         details: error instanceof Error ? error.message : 'Unknown error'
+68:       },
+69:       { status: 500 }
+70:     )
+71:   }
+72: }
+73: 
+74: // PUT - Batch update settings
+75: export async function PUT(request: NextRequest) {
+76:   try {
+77:     // Tạm thời disable auth check cho development  
+78:     // const session = await getServerSession(authOptions)
+79:     // if (!session || session.user.role !== 'admin') {
+80:     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+81:     // }
+82: 
+83:     const body = await request.json()
+84:     const { settings } = body
+85: 
+86:     if (!settings || typeof settings !== 'object') {
+87:       return NextResponse.json(
+88:         { 
+89:           success: false,
+90:           error: 'Dữ liệu settings không hợp lệ' 
+91:         },
+92:         { status: 400 }
+93:       )
+94:     }
+95: 
+96:     // Batch update với transaction
+97:     const results = await DatabaseHelper.transaction(async (tx) => {
+98:       const updatePromises = Object.entries(settings).map(([key, value]) => {
+99:         return tx.$executeRaw`
+100:           UPDATE "Setting" 
+101:           SET "value" = ${String(value)}, "updatedAt" = NOW()
+102:           WHERE "key" = ${key}
+103:         `
+104:       })
+105: 
+106:       return await Promise.all(updatePromises)
+107:     })
+108: 
+109:     console.log(`✅ Updated ${results.length} settings successfully`)
+110: 
+111:     return NextResponse.json({
+112:       success: true,
+113:       message: `Đã cập nhật ${results.length} settings thành công`,
+114:       updated: results.length
+115:     })
+116: 
+117:   } catch (error) {
+118:     console.error('Settings API PUT error:', error)
+119:     return NextResponse.json(
+120:       { 
+121:         success: false,
+122:         error: 'Lỗi khi cập nhật settings',
+123:         details: error instanceof Error ? error.message : 'Unknown error'
+124:       },
+125:       { status: 500 }
+126:     )
+127:   }
+128: }
