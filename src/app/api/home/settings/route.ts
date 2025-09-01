@@ -1,24 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { DatabaseHelper } from '@/lib/database-helper'
+import { prisma } from '@/lib/prisma'
+
+// Tránh gọi chéo nội bộ trên Vercel (gây chậm/timeout)
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    // Fetch admin settings from internal API using current origin
-    const origin = request.nextUrl.origin
-    const adminSettingsRes = await fetch(`${origin}/api/admin/settings`)
-    const adminSettingsData = await adminSettingsRes.json()
+    // Truy vấn trực tiếp DB thay vì gọi nội bộ /api/admin/settings
+    // Lưu ý: bảng nguồn là "Setting" (model prisma: public_Setting)
+    const rows = await DatabaseHelper.executeWithRetry(() =>
+      prisma.public_Setting.findMany({
+        where: { group: { in: ['general', 'social'] } },
+        select: { key: true, value: true, group: true },
+        orderBy: [{ group: 'asc' }, { key: 'asc' }],
+      })
+    )
 
-    if (!adminSettingsData.success) {
-      return NextResponse.json(
-        { error: 'Failed to fetch admin settings' },
-        { status: 500 }
-      )
-    }
-
-    // Extract needed groups
-    const generalSettings = adminSettingsData.data.general || []
-    const socialSettings = adminSettingsData.data.social || []
-    const contactSettings = adminSettingsData.data.general || [] // Contact info is in general group
+    const generalSettings = rows.filter(r => r.group === 'general')
+    const socialSettings = rows.filter(r => r.group === 'social')
+    const contactSettings = generalSettings // contact info nằm trong group general
 
     // Map settings to key-value
     const settingsMap: Record<string, string> = {}
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(settingsMap)
+    return NextResponse.json(settingsMap, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('Home settings API error:', error)
 
@@ -53,4 +55,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

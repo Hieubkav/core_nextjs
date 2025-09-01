@@ -1,0 +1,57 @@
+1: import { NextRequest, NextResponse } from 'next/server'
+2: import { DatabaseHelper } from '@/lib/database-helper'
+3: import { prisma } from '@/lib/prisma'
+4: 
+5: // Tránh gọi chéo nội bộ trên Vercel (gây chậm/timeout)
+6: export const runtime = 'nodejs'
+7: export const dynamic = 'force-dynamic'
+8: 
+9: export async function GET(request: NextRequest) {
+10:   try {
+11:     // Truy vấn trực tiếp DB thay vì gọi nội bộ /api/admin/settings
+12:     // Lưu ý: bảng nguồn là "Setting" (model prisma: public_Setting)
+13:     const rows = await DatabaseHelper.executeWithRetry(() =>
+14:       prisma.public_Setting.findMany({
+15:         where: { group: { in: ['general', 'social'] } },
+16:         select: { key: true, value: true, group: true },
+17:         orderBy: [{ group: 'asc' }, { key: 'asc' }],
+18:       })
+19:     )
+20: 
+21:     const generalSettings = rows.filter(r => r.group === 'general')
+22:     const socialSettings = rows.filter(r => r.group === 'social')
+23:     const contactSettings = generalSettings // contact info nằm trong group general
+24: 
+25:     // Map settings to key-value
+26:     const settingsMap: Record<string, string> = {}
+27: 
+28:     generalSettings.forEach((setting: any) => {
+29:       settingsMap[setting.key] = setting.value
+30:     })
+31: 
+32:     socialSettings.forEach((setting: any) => {
+33:       settingsMap[setting.key] = setting.value
+34:     })
+35: 
+36:     contactSettings.forEach((setting: any) => {
+37:       if (['contact_email', 'contact_phone', 'address'].includes(setting.key)) {
+38:         settingsMap[setting.key] = setting.value
+39:       }
+40:     })
+41: 
+42:     return NextResponse.json(settingsMap, { headers: { 'Cache-Control': 'no-store' } })
+43:   } catch (error) {
+44:     console.error('Home settings API error:', error)
+45: 
+46:     // If connection error, try reconnect
+47:     if (error instanceof Error && error.message.includes('prepared statement')) {
+48:       console.log('Attempting database reconnection...')
+49:       await DatabaseHelper.reconnect()
+50:     }
+51: 
+52:     return NextResponse.json(
+53:       { error: 'Internal server error' },
+54:       { status: 500 }
+55:     )
+56:   }
+57: }
