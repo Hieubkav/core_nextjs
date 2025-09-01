@@ -87,7 +87,7 @@ export async function DELETE(
 
     // Delete FAQ
     await prisma.fAQ.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     return NextResponse.json({ success: true })
