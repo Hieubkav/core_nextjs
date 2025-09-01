@@ -10,22 +10,34 @@ export const dynamic = 'force-dynamic'
 
 type ProbeSummary = {
   url: string
+  method?: string
   status?: number
   ok?: boolean
   durationMs: number
   contentType?: string | null
+  allow?: string | null
   size?: number
   items?: number
   keys?: string[]
   error?: string
 }
 
-async function probeEndpoint(url: string): Promise<ProbeSummary> {
+async function probeEndpoint(url: string, init?: RequestInit, timeoutMs = 10000): Promise<ProbeSummary> {
   const started = Date.now()
   try {
-    const res = await fetch(url, { cache: 'no-store', headers: { 'accept': 'application/json' } })
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    const method = (init?.method || 'GET').toString().toUpperCase()
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: { accept: 'application/json', ...(init?.headers as any) },
+      method,
+      signal: controller.signal
+    })
+    clearTimeout(timer)
     const durationMs = Date.now() - started
     const contentType = res.headers.get('content-type')
+    const allow = res.headers.get('allow')
 
     let items: number | undefined
     let keys: string[] | undefined
@@ -56,10 +68,12 @@ async function probeEndpoint(url: string): Promise<ProbeSummary> {
 
     return {
       url,
+      method,
       status: res.status,
       ok: res.ok,
       durationMs,
       contentType,
+      allow,
       size,
       items,
       keys
@@ -67,6 +81,7 @@ async function probeEndpoint(url: string): Promise<ProbeSummary> {
   } catch (err: any) {
     return {
       url,
+      method: (init?.method || 'GET').toString().toUpperCase(),
       durationMs: Date.now() - started,
       error: err?.message || 'Unknown fetch error'
     }
@@ -79,6 +94,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = request.url
   const proto = h.get('x-forwarded-proto') ?? 'http'
   const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
+  const originFromRequest = (request as any)?.nextUrl?.origin ?? `${proto}://${host}`
 
   // Base URL as used by the app
   const baseUrl = getBaseUrl()
@@ -114,11 +130,20 @@ export async function GET(request: NextRequest) {
     '/api/admin/sidebar-counts'
   ]
 
-  const absolute = (p: string) => `${baseUrl}${p}`
-  const probes = await Promise.all(endpoints.map(p => probeEndpoint(absolute(p))))
+  // Probe bổ sung cho admin/settings để phát hiện lỗi cập nhật (không gây side-effect)
+  const methodProbes = [
+    { path: '/api/admin/settings', method: 'OPTIONS' },
+    { path: '/api/admin/settings', method: 'HEAD' },
+    { path: '/api/admin/settings', method: 'GET' },
+  ]
+
+  const absolute = (p: string) => `${originFromRequest}${p}`
+  const getProbes = await Promise.all(endpoints.map(p => probeEndpoint(absolute(p))))
+  const extraProbes = await Promise.all(methodProbes.map(({ path, method }) => probeEndpoint(absolute(path), { method })))
+  const probes = [...getProbes, ...extraProbes]
 
   // Prisma health
-  const db = await PrismaHelper.healthCheck()
+  const db = await PrismaHelper.healthCheck().catch((e: any) => ({ healthy: false, error: e?.message || 'Prisma health check failed' }))
 
   const result = {
     meta: {
@@ -133,12 +158,13 @@ export async function GET(request: NextRequest) {
       derivedProto: proto,
       derivedHost: host,
       baseUrlUsedByApp: baseUrl,
-      hint: 'baseUrl is computed via getBaseUrl() with env/headers'
+      baseUrlFromRequest: originFromRequest,
+      hint: 'Probes use originFromRequest; admin/settings checked via OPTIONS/HEAD/GET'
     },
     envPresence,
     database: db,
     probes
   }
 
-  return NextResponse.json(result, { status: 200 })
+  return NextResponse.json(result, { status: 200, headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } })
 }
