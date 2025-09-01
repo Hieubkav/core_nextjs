@@ -128,7 +128,9 @@ const BlogGrid: React.FC<BlogGridProps> = ({ posts, title = 'Tin tức & Bài vi
               {mappedPosts.map((post, idx) => (
                 <div
                   key={post.id}
-                  ref={(el) => (cardRefs.current[idx] = el)}
+                  ref={(el) => {
+                    cardRefs.current[idx] = el
+                  }}
                   className="snap-center shrink-0 min-w-[calc(50%-0.5rem)] md:min-w-[calc(25%-0.75rem)]"
                 >
                   <button

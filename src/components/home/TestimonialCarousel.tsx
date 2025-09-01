@@ -222,7 +222,9 @@ const TestimonialCarousel: React.FC<TestimonialCarouselProps> = ({
             {mapped.map((t, idx) => (
               <div
                 key={t.id}
-                ref={(el) => (cardRefs.current[idx] = el)}
+                ref={(el) => {
+                  cardRefs.current[idx] = el
+                }}
                 className="snap-center shrink-0 basis-[88%] sm:basis-[72%] md:basis-[56%] lg:basis-[34%] xl:basis-[30%]"
               >
                 <div className="relative h-full rounded-3xl border border-white/70 bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(17,24,39,0.08)] px-6 py-6 md:px-7 md:py-7">

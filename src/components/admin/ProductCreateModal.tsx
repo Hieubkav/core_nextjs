@@ -101,6 +101,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
         shortDesc: '',
         categoryId: '',
         isVisible: true,
+        isPublished: false,
         status: 'active',
         sortOrder: 0
       })
@@ -408,6 +409,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
       categoryId: '',
       isVisible: true,
       isPublished: false,
+      status: 'active',
       sortOrder: 0
     })
     setVariants([

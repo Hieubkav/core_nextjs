@@ -27,7 +27,7 @@ interface ProductFromAdmin {
   createdAt: string;
   updatedAt: string;
   category?: { id: number; name: string; slug: string } | null;
-  variants?: { price: number; originalPrice?: number | null; isDefault?: boolean }[];
+  variants?: { name?: string; price: number; originalPrice?: number | null; isDefault?: boolean }[];
   images?: { image: { url: string } }[];
 }
 
