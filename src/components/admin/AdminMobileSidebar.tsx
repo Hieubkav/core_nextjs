@@ -4,7 +4,7 @@ import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { navigation } from '@/components/admin/AdminSidebar'
+import { navigation } from '@/components/admin/navigation'
 import { useSidebarCounts } from '@/hooks/useSidebarCounts'
 
 type Props = {
@@ -109,4 +109,3 @@ export default function AdminMobileSidebar({ open, onClose }: Props) {
     </Transition.Root>
   )
 }
-

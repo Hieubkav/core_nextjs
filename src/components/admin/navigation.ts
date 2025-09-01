@@ -12,11 +12,12 @@ import {
   ShoppingCartIcon,
   StarIcon,
 } from '@heroicons/react/24/outline'
+import type { ComponentType, SVGProps } from 'react'
 
 export type NavItem = {
   name: string
   href: string
-  icon: (props: React.ComponentProps<'svg'>) => JSX.Element
+  icon: ComponentType<SVGProps<SVGSVGElement>>
   showBadge?:
     | 'products'
     | 'categories'
@@ -43,4 +44,3 @@ export const navigation: NavItem[] = [
   { name: 'Giao diện', href: '/admin/webdesign', icon: PaintBrushIcon },
   { name: 'Cài đặt', href: '/admin/settings', icon: CogIcon },
 ]
-
