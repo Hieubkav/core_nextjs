@@ -16,10 +16,10 @@ interface Setting {
   updatedAt: Date
 }
 
-// GET - Lấy tất cả settings hoặc theo group
+// GET - lấy tất cả settings hoặc theo group
 export async function GET(request: NextRequest) {
   try {
-    // Tạm thời disable auth check cho development
+    // Tạm thời bỏ qua auth khi dev
     // const session = await getServerSession(authOptions)
     // if (!session || session.user.role !== 'admin') {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,98 +31,82 @@ export async function GET(request: NextRequest) {
     const settings = await DatabaseHelper.executeWithRetry(async () => {
       if (group) {
         return await prisma.$queryRaw<Setting[]>`
-          SELECT * FROM "Setting" 
+          SELECT * FROM "Setting"
           WHERE "group" = ${group}
           ORDER BY "key" ASC
         `
       } else {
         return await prisma.$queryRaw<Setting[]>`
-          SELECT * FROM "Setting" 
+          SELECT * FROM "Setting"
           ORDER BY "group" ASC, "key" ASC
         `
       }
     })
 
-    // Chuyển đổi data thành object grouped by group
+    // Group theo field group
     const groupedSettings: Record<string, Setting[]> = {}
-    settings.forEach(setting => {
-      if (!groupedSettings[setting.group]) {
-        groupedSettings[setting.group] = []
-      }
+    settings.forEach((setting) => {
+      if (!groupedSettings[setting.group]) groupedSettings[setting.group] = []
       groupedSettings[setting.group].push(setting)
     })
 
-    return NextResponse.json({ 
-      success: true,
-      data: groupedSettings,
-      total: settings.length
-    })
-
+    return NextResponse.json({ success: true, data: groupedSettings, total: settings.length })
   } catch (error) {
     console.error('Settings API GET error:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Lỗi khi lấy dữ liệu settings',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
 
-// PUT - Batch update settings
+// PUT - batch update settings (theo approach FAQ dùng Prisma client)
 export async function PUT(request: NextRequest) {
   try {
-    // Tạm thời disable auth check cho development  
+    // Tạm thời bỏ qua auth khi dev
     // const session = await getServerSession(authOptions)
     // if (!session || session.user.role !== 'admin') {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
     const body = await request.json()
-    const { settings } = body
+    const { settings } = body as { settings: Record<string, unknown> }
 
     if (!settings || typeof settings !== 'object') {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Dữ liệu settings không hợp lệ' 
-        },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: 'Dữ liệu settings không hợp lệ' }, { status: 400 })
     }
 
-    // Batch update với transaction
+    // Chuẩn hóa payload
+    const payload = Object.entries(settings).map(([key, value]) => ({
+      key,
+      value: String(value ?? ''),
+    }))
+
+    // Thực hiện theo transaction + updateMany để không throw nếu key không tồn tại
     const results = await DatabaseHelper.transaction(async (tx) => {
-      const updatePromises = Object.entries(settings).map(([key, value]) => {
-        return tx.$executeRaw`
-          UPDATE "Setting" 
-          SET "value" = ${String(value)}, "updatedAt" = NOW()
-          WHERE "key" = ${key}
-        `
-      })
-
-      return await Promise.all(updatePromises)
+      const ops = payload.map(({ key, value }) =>
+        tx.public_Setting.updateMany({ where: { key }, data: { value, updatedAt: new Date() } }),
+      )
+      return Promise.all(ops)
     })
 
-    console.log(`✅ Updated ${results.length} settings successfully`)
+    const updatedCount = results.reduce((sum: number, r: any) => sum + (r?.count ?? 0), 0)
 
-    return NextResponse.json({
-      success: true,
-      message: `Đã cập nhật ${results.length} settings thành công`,
-      updated: results.length
-    })
-
+    return NextResponse.json({ success: true, message: `Đã cập nhật ${updatedCount} settings`, updated: updatedCount })
   } catch (error) {
     console.error('Settings API PUT error:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Lỗi khi cập nhật settings',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
+
