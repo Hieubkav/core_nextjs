@@ -57,6 +57,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
     shortDesc: '',
     categoryId: '',
     isVisible: true,
+    isPublished: false,
     status: 'active', // active, inactive, sold_out
     sortOrder: 0
   })
