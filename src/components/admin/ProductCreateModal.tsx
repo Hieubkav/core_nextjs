@@ -67,7 +67,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
       description: '',
       price: 0,
       originalPrice: 0,
-      stock: 0,
+      
       isDefault: true,
       isVisible: true,
       sortOrder: 0,
@@ -109,7 +109,7 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
           description: '',
           price: 0,
           originalPrice: 0,
-          stock: 0,
+          
           isDefault: true,
           isVisible: true,
           sortOrder: 0,
