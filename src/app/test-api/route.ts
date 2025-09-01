@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
   // headers() có thể được typing là Promise trên một số setup; dùng any + optional chaining cho an toàn
   const h: any = headers() as any
   const requestUrl = request.url
-  const proto = h?.get?.('x-forwarded-proto') ?? 'http'
-  const host = h?.get?.('x-forwarded-host') ?? h?.get?.('host') ?? 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') ?? 'http'
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
 
   // Base URL as used by the app
   const baseUrl = getBaseUrl()
