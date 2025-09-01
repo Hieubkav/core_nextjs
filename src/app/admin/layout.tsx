@@ -4,8 +4,10 @@
 // import { useSession } from 'next-auth/react'
 // import { useRouter } from 'next/navigation'
 // import { useEffect } from 'react'
+import { useState } from 'react'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
+import AdminMobileSidebar from '@/components/admin/AdminMobileSidebar'
 import { ToastProvider } from '@/components/common/ToastProvider'
 
 export default function AdminLayout({
@@ -13,6 +15,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   // Temporarily disabled for development
   // const { data: session, status } = useSession()
   // const router = useRouter()
@@ -46,9 +49,10 @@ export default function AdminLayout({
   return (
     <ToastProvider>
       <div className="min-h-screen bg-gray-50">
+        <AdminMobileSidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
         <AdminSidebar />
         <div className="lg:pl-64">
-          <AdminHeader />
+          <AdminHeader onOpenSidebar={() => setMobileMenuOpen(true)} />
           <main className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               {children}

@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useSidebarCounts } from '@/hooks/useSidebarCounts'
 
-const navigation = [
+export const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Sản phẩm', href: '/admin/products', icon: ShoppingBagIcon, showBadge: 'products' },
   { name: 'Danh mục', href: '/admin/categories', icon: TagIcon, showBadge: 'categories' },
