@@ -242,9 +242,9 @@ export default function ProductCreateModal({ isOpen, onClose, onSuccess }: Produ
     }
     
     // Cập nhật trạng thái validation
-    variant[`${field}Input` as keyof ProductVariant] = value
-    variant[`${field}Valid` as keyof ProductVariant] = validation.isValid
-    variant[`${field}Error` as keyof ProductVariant] = validation.error || ''
+    (variant as any)[`${field}Input`] = value
+    (variant as any)[`${field}Valid`] = validation.isValid
+    (variant as any)[`${field}Error`] = validation.error || ''
     
     newVariants[index] = variant
     setVariants(newVariants)
