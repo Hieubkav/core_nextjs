@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DatabaseHelper } from '@/lib/database-helper'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 interface Setting {
   id: number
   key: string
@@ -82,17 +85,18 @@ export async function PUT(request: NextRequest) {
 
     // Chuẩn hóa payload
     const payload = Object.entries(settings).map(([key, value]) => ({
-      key,
+      key: String(key),
       value: String(value ?? ''),
     }))
 
-    // Thực hiện theo transaction + updateMany để không throw nếu key không tồn tại
-    const results = await DatabaseHelper.transaction(async (tx) => {
-      const ops = payload.map(({ key, value }) =>
-        tx.public_Setting.updateMany({ where: { key }, data: { value, updatedAt: new Date() } }),
-      )
-      return Promise.all(ops)
-    })
+    // Sử dụng batch transaction (mảng promises) để tránh interactive transaction trên pgbouncer
+    const ops = payload.map(({ key, value }) =>
+      prisma.public_Setting.updateMany({ where: { key }, data: { value, updatedAt: new Date() } })
+    )
+
+    const results = await DatabaseHelper.executeWithRetry(() =>
+      prisma.$transaction(ops as any, { timeout: 8000, maxWait: 5000 })
+    )
 
     const updatedCount = results.reduce((sum: number, r: any) => sum + (r?.count ?? 0), 0)
 
@@ -109,4 +113,3 @@ export async function PUT(request: NextRequest) {
     )
   }
 }
-
