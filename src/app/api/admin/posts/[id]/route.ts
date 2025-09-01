@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Get single Post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const post = await prisma.post.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt((await params).id) },
       include: {
         thumbnail: true
       }
@@ -35,7 +35,7 @@ export async function GET(
 // PUT - Update Post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -50,7 +50,7 @@ export async function PUT(
     }
 
     const post = await prisma.post.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt((await params).id) },
       data: {
         title,
         slug,
@@ -77,12 +77,12 @@ export async function PUT(
 // DELETE - Delete Post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if Post exists
     const post = await prisma.post.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     if (!post) {
@@ -94,7 +94,7 @@ export async function DELETE(
 
     // Delete Post
     await prisma.post.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     return NextResponse.json({ success: true })

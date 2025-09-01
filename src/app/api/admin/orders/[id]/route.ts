@@ -5,10 +5,10 @@ import { DatabaseHelper } from '@/lib/database-helper'
 // GET - Lấy chi tiết đơn hàng theo ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Lấy chi tiết đơn hàng cùng với các sản phẩm trong đơn hàng
     const order = await DatabaseHelper.executeWithRetry(async () => {
@@ -67,10 +67,10 @@ export async function GET(
 // PUT - Cập nhật đơn hàng (chủ yếu là cập nhật trạng thái)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { status, adminNotes } = body
 
@@ -127,10 +127,10 @@ export async function PUT(
 // DELETE - Xóa đơn hàng (chỉ nên cho admin với quyền cao)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Kiểm tra đơn hàng có tồn tại không
     const existingOrder = await DatabaseHelper.executeWithRetry(async () => {

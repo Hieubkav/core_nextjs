@@ -7,7 +7,7 @@ import { DatabaseHelper } from '@/lib/database-helper'
 // GET - Lấy setting theo key
 export async function GET(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
     // Tạm thời disable auth check cho development
@@ -16,7 +16,7 @@ export async function GET(
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
-    const { key } = params
+    const { key } = await params
 
     const setting = await DatabaseHelper.executeWithRetry(async () => {
       const result = await prisma.$queryRaw<any[]>`
@@ -56,7 +56,7 @@ export async function GET(
 // PUT - Cập nhật setting theo key
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
     // Tạm thời disable auth check cho development
@@ -65,7 +65,7 @@ export async function PUT(
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     // }
 
-    const { key } = params
+    const { key } = await params
     const body = await request.json()
     const { value } = body
 

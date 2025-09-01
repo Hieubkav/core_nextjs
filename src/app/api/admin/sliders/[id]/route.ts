@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Get single slider
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const slider = await prisma.slider.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt((await params).id) },
       include: {
         image: true
       }
@@ -35,7 +35,7 @@ export async function GET(
 // PUT - Update slider
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -50,7 +50,7 @@ export async function PUT(
     }
 
     const slider = await prisma.slider.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt((await params).id) },
       data: {
         title,
         subtitle: subtitle || null,
@@ -80,12 +80,12 @@ export async function PUT(
 // DELETE - Delete slider
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if slider exists
     const slider = await prisma.slider.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     if (!slider) {
@@ -97,7 +97,7 @@ export async function DELETE(
 
     // Delete slider
     await prisma.slider.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     return NextResponse.json({ success: true })

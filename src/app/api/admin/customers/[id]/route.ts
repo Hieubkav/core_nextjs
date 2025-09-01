@@ -5,12 +5,12 @@ import { DatabaseHelper } from '@/lib/database-helper'
 // GET - Get single customer
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const customer = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.customer.findUnique({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt((await params).id) }
       })
     })
 
@@ -45,7 +45,7 @@ export async function GET(
 // PUT - Update customer
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -79,7 +79,7 @@ export async function PUT(
       return await prisma.customer.findFirst({
         where: {
           email: email,
-          id: { not: parseInt(params.id) }
+          id: { not: parseInt((await params).id) }
         }
       })
     })
@@ -97,7 +97,7 @@ export async function PUT(
     // Update customer
     const customer = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.customer.update({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt((await params).id) },
         data: {
           name,
           email,
@@ -134,13 +134,13 @@ export async function PUT(
 // DELETE - Delete customer
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if customer exists
     const customer = await DatabaseHelper.executeWithRetry(async () => {
       return await prisma.customer.findUnique({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt((await params).id) }
       })
     })
 
@@ -157,7 +157,7 @@ export async function DELETE(
     // Delete customer
     await DatabaseHelper.executeWithRetry(async () => {
       await prisma.customer.delete({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt((await params).id) }
       })
     })
 

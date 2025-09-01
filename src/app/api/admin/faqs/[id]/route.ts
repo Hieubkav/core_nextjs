@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Get single FAQ
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const faq = await prisma.fAQ.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     if (!faq) {
@@ -32,7 +32,7 @@ export async function GET(
 // PUT - Update FAQ
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -47,7 +47,7 @@ export async function PUT(
     }
 
     const faq = await prisma.fAQ.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt((await params).id) },
       data: {
         question,
         answer,
@@ -70,12 +70,12 @@ export async function PUT(
 // DELETE - Delete FAQ
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if FAQ exists
     const faq = await prisma.fAQ.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt((await params).id) }
     })
 
     if (!faq) {
