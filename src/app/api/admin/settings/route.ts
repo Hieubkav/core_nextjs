@@ -94,8 +94,8 @@ export async function PUT(request: NextRequest) {
       prisma.public_Setting.updateMany({ where: { key }, data: { value, updatedAt: new Date() } })
     )
 
-    const results = await DatabaseHelper.executeWithRetry(() =>
-      prisma.$transaction(ops as any, { timeout: 8000, maxWait: 5000 })
+    const results = await DatabaseHelper.executeWithRetry<Array<{ count: number }>>(() =>
+      prisma.$transaction(ops as any, { timeout: 8000, maxWait: 5000 }) as Promise<Array<{ count: number }>>
     )
 
     const updatedCount = results.reduce((sum: number, r: any) => sum + (r?.count ?? 0), 0)
